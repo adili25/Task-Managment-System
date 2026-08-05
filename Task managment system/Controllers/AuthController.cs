@@ -11,10 +11,10 @@ namespace Task_managment_system.Controllers
 {
     [ApiController]
     [Route("/api/auth")]
-    public class AuthController (AuthServices authServices): ControllerBase
+    public class AuthController : ControllerBase
     {
+        private readonly AuthServices authServices;
         private readonly UserRepository _userRepo;
-
         private readonly ILogger<AuthController> logger;
 
         public AuthController(UserRepository userRepo)

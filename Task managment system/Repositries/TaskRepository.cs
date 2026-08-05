@@ -32,10 +32,10 @@ namespace Task_managment_system.Repositries
         }
 
         //get Task by Id
-        public TaskItem GetTaskById(Guid Id)
+        public TaskItem GetTaskById(string Id)
         {
             //fetching the user from Users
-            TaskItem? task = Tasks.FirstOrDefault(t => t.Id == Id);
+            TaskItem? task = Tasks.FirstOrDefault(t => t.Id.ToString() == Id);
 
             //check if the user exist or not
             if (task == default)
