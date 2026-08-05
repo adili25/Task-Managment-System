@@ -73,5 +73,24 @@ namespace Task_managment_system.Services
             }
             return null;
         }
+
+        public bool AddTask(TaskItem task)
+        {
+            if (task == null)
+                return false;
+
+            _taskRepo.AddTask(task);
+            return true;
+        }
+
+        public bool DeleteTask(TaskItem task)
+        {
+            if (_taskRepo.DeleteTask(task.Id.ToString()))
+            {
+                return true;
+            }
+
+            else return false;
+        }
     }
 }

@@ -7,7 +7,6 @@ using Task_managment_system.Services;
 
 namespace Task_managment_system.Controllers
 {
-
     [ApiController]
     [Route("/api/task")]
     [Authorize]
@@ -15,7 +14,9 @@ namespace Task_managment_system.Controllers
     {
         private readonly TaskServices _taskServices;
         private readonly ILogger<TaskController> logger;
+        //the constructor for DI
 
+        [HttpGet]
         public ActionResult<List<TaskItem>> GetTasks([FromQuery] TaskFilters filters)
         {
             //the business rules here is that if the user was Admin => get all the tasks, if user was a User => get the tasks assigned to them
@@ -27,12 +28,14 @@ namespace Task_managment_system.Controllers
             
             if (listOfTasks == null)
             {
+                //log in badrequest
                 return BadRequest();
             }
 
             return Ok(listOfTasks);
         }
 
+        [HttpGet("{id}")]
         public ActionResult<TaskItem> GetTaskById([FromQuery] string id)
         {
             var task = _taskServices.GetTaskById(id);
@@ -44,7 +47,71 @@ namespace Task_managment_system.Controllers
 
             return Ok(task);
         }
+        
+        [HttpPost]
+        public IActionResult CreateTask([FromBody] TaskDto requestTask)
+        {
+            TaskItem newTask = new (
+                    requestTask.Title,
+                    requestTask.Discreption,
+                    requestTask.Priority,
+                    requestTask.DueDate,
+                    requestTask.CreatedByUserId,
+                    requestTask.AssignedToUserId
+                );
 
+            _taskServices.AddTask(newTask);
 
+            return Created();
+        }
+
+        [HttpPatch]
+        public IActionResult UpdateTask([FromRoute] string id, [FromBody] TaskDto RecivedUpdatedTask)
+        {
+            if (id == null)
+            {
+                return BadRequest();
+            }
+
+            var task = _taskServices.GetTaskById(id);
+            if (task == null)
+            {
+                return NotFound("The Task With Given Id Not Found");
+            }
+
+            //varify the user is authrized and return forbidden if not auth
+
+            task.Title = RecivedUpdatedTask.Title;
+            task.Description = RecivedUpdatedTask.Discreption;
+            task.TaskStatus = RecivedUpdatedTask.TaskStatus;
+            task.DueDate = RecivedUpdatedTask.DueDate;
+            task.CreatedByUserId = RecivedUpdatedTask.CreatedByUserId;
+            task.AssignedToUserId = task.AssignedToUserId;
+            task.TaskPriority = RecivedUpdatedTask.Priority;
+
+            return Ok(task);
+        }
+
+        [HttpDelete]
+        public IActionResult DeleteTask([FromRoute] string id)
+        {
+            if (id == null)
+            {
+                return BadRequest();
+            }
+
+            var task = _taskServices.GetTaskById(id);
+            if (task == null)
+            {
+                return NotFound("The Task With Given Id Not Found");
+            }
+
+            if (_taskServices.DeleteTask(task))
+            {
+                return NoContent();
+            }
+
+            else return NotFound("The Task With Given Id Not Found");
+        }
     }
 }

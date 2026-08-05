@@ -32,7 +32,7 @@ namespace Task_managment_system.Repositries
         }
 
         //get Task by Id
-        public TaskItem GetTaskById(string Id)
+        public TaskItem GetTaskById(string id)
         {
             //fetching the user from Users
             TaskItem? task = Tasks.FirstOrDefault(t => t.Id.ToString() == Id);
@@ -44,6 +44,19 @@ namespace Task_managment_system.Repositries
             }
 
             return task;
+        }
+
+        public bool DeleteTask(string id)
+        {
+            var task = Tasks.FirstOrDefault(t => t.Id.ToString() == id));
+            
+            if (task == default)
+            {
+                return false;
+            }
+
+            Tasks.Remove(task);
+            return true;
         }
 
     }

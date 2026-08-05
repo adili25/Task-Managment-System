@@ -1,4 +1,6 @@
-﻿namespace Task_Manager.Models
+﻿using Task_managment_system.Enums;
+
+namespace Task_Manager.Models
 {
     public enum Priority
     {
