@@ -1,14 +1,5 @@
 ﻿namespace Task_Manager.Models
 {
-    public enum Status
-    {
-        Pending = 0,
-        InProgress = 1,
-        Completed = 2,
-        Blocked = 3,
-        Canceled = 4
-    }
-
     public enum Priority
     {
         Low = 0,

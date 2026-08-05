@@ -1,12 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Task_managment_system.Enums;
 
 namespace Task_Manager.Models
 {
-    public enum Roles
-    {
-        Admin,
-        User
-    }
     public class ApplicationUser
     {
         public Guid Id { get; set; }
@@ -17,7 +13,7 @@ namespace Task_Manager.Models
         public string PasswordHash { get; set; }
         public Roles Role { get; set; }
         
-        public ApplicationUser(Guid id, string fullName, string email, string passwordHash, Roles role)
+        public ApplicationUser(string fullName, string email, string passwordHash, Roles role)
         {
             if (FullName == default)
             {
