@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Task_Manager.Models;
 using Task_managment_system.Repositries;
+using Task_managment_system.Services;
+using Task_managment_system.DTO;
 
 namespace Task_managment_system.Controllers
 {
@@ -12,23 +14,17 @@ namespace Task_managment_system.Controllers
     [Authorize(Policy = "Admin")]
     public class ReportsController : ControllerBase
     {
-        private readonly TaskRepository _taskRepo;
-        private readonly UserRepository _userRepo;
+        private readonly ReportServices _reportServices;
 
-        public ReportsController(TaskRepository taskRepo, UserRepository userRepo)
+        public ReportsController(ReportServices reportServices)
         {
-            _taskRepo = taskRepo;
-            _userRepo = userRepo;
+            _reportServices = reportServices;
         }
 
         [HttpGet("taks-summary")]
         public IActionResult TasksReport()
         {
-            List<TaskItem> tasks = [.. _taskRepo.GetAllTasks()];
-
-            var groupedTasks = tasks.GroupBy(t => t.TaskStatus);
-
-
+            TaskSummaryReportDto report = _reportServices.CreateTasksReport();
             return Ok();
         }
     }
