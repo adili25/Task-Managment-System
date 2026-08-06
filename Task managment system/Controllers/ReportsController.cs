@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Task_Manager.Models;
-using Task_managment_system.Repositries;
 using Task_managment_system.Services;
 using Task_managment_system.DTO;
 
@@ -22,10 +19,10 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpGet("taks-summary")]
-        public IActionResult TasksReport()
+        public IActionResult TasksReport([FromBody] DateTime FromDate, [FromBody] DateTime ToDate)
         {
-            TaskSummaryReportDto report = _reportServices.CreateTasksReport();
-            return Ok();
+            TaskSummaryReportDto report = _reportServices.CreateTasksReport(FromDate, ToDate);
+            return Ok(report);
         }
     }
 }
