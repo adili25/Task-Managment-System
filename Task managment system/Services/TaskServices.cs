@@ -7,6 +7,11 @@ namespace Task_managment_system.Services
     public class TaskServices
     {
         private readonly TaskRepository _taskRepo;
+
+        public TaskServices(TaskRepository taskRepo)
+        {
+            _taskRepo = taskRepo;
+        }
         public List<TaskItem> GetTasks(string userId, bool isAdmin, TaskFilters filters)
         {
             List<TaskItem> tasks = _taskRepo.GetAllTasks().ToList();
@@ -17,17 +22,9 @@ namespace Task_managment_system.Services
                 //[.. ] => tasks.Where(...).ToList();
             }
 
-            if (filters.TitleOrDiscription != null)
+            if (filters.TitleOrDescription != null)
             {
-                if (filters.TitleOrDiscription.ContainsKey("title"))
-                {
-                    tasks = [.. tasks.Where(t => t.Title == filters.TitleOrDiscription["title"])];
-                }
-
-                else if (filters.TitleOrDiscription.ContainsKey("discreption"))
-                {
-                    tasks = [.. tasks.Where(t => t.Description == filters.TitleOrDiscription["discreption"])];
-                }
+                tasks = [.. tasks.Where(t => t.Title.Contains(filters.TitleOrDescription) || t.Description.Contains(filters.TitleOrDescription))];
             }
 
             if (filters.Status != null)
@@ -63,7 +60,7 @@ namespace Task_managment_system.Services
             return tasks;
         }
 
-        public TaskItem GetTaskById(string id)
+        public TaskItem? GetTaskById(string id)
         {
             var task = _taskRepo.GetTaskById(id);
 

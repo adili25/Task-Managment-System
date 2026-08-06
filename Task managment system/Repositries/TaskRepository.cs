@@ -35,7 +35,7 @@ namespace Task_managment_system.Repositries
         public TaskItem GetTaskById(string id)
         {
             //fetching the user from Users
-            TaskItem? task = Tasks.FirstOrDefault(t => t.Id.ToString() == Id);
+            TaskItem? task = Tasks.FirstOrDefault(t => t.Id.ToString() == id);
 
             //check if the user exist or not
             if (task == default)
@@ -48,7 +48,7 @@ namespace Task_managment_system.Repositries
 
         public bool DeleteTask(string id)
         {
-            var task = Tasks.FirstOrDefault(t => t.Id.ToString() == id));
+            var task = Tasks.FirstOrDefault(t => t.Id.ToString() == id);
             
             if (task == default)
             {

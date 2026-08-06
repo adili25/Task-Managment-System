@@ -13,27 +13,29 @@ namespace Task_managment_system.Controllers
     [Route("/api/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly AuthServices authServices;
+        private readonly AuthServices _authServices;
         private readonly UserRepository _userRepo;
-        private readonly ILogger<AuthController> logger;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(UserRepository userRepo)
+        public AuthController( AuthServices authServices, UserRepository userRepo, ILogger<AuthController> logger)
         {
             _userRepo = userRepo;
+            _authServices = authServices;
+            _logger = logger;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> RegisterNewUser([FromBody] RegisterDto request)
         {
-            logger.LogInformation("--> statring the registeration");
+            _logger.LogInformation("--> statring the registeration");
 
             if(request == default)
             {
-                logger.LogError("<-- the request payload is not valid");
+                _logger.LogError("<-- the request payload is not valid");
                 return BadRequest("the request is Null");
             }
 
-            logger.LogInformation("creating new User");
+            _logger.LogInformation("creating new User");
             var newUser = new ApplicationUser(
                 request.FullName,
                 request.Email,
@@ -41,7 +43,7 @@ namespace Task_managment_system.Controllers
                 request.Role
             );
 
-            logger.LogInformation("adding the User");
+            _logger.LogInformation("adding the User");
             _userRepo.AddUser(newUser);
 
             return Ok(newUser);
@@ -52,7 +54,7 @@ namespace Task_managment_system.Controllers
         {
             if (request == default)
             {
-                logger.LogError("<-- the request payload is not valid");
+                _logger.LogError("<-- the request payload is not valid");
                 return BadRequest("the request is Null");
             }
 
@@ -68,7 +70,7 @@ namespace Task_managment_system.Controllers
                 BadRequest("Password Not Valid");
             }
 
-            var JwtToken = authServices.GenerateJwtToken(LoginUser.Id.ToString(), LoginUser.Email, LoginUser.Role);
+            var JwtToken = _authServices.GenerateJwtToken(LoginUser.Id.ToString(), LoginUser.Email, LoginUser.Role);
 
             return Ok(new
             {

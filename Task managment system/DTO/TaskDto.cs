@@ -32,10 +32,6 @@ namespace Task_managment_system.DTO
         [Required(ErrorMessage = "The Task Priority required.")]
         public Priority Priority { get; set; }
 
-        // 1. Parameterless constructor (Required by ASP.NET Core Model Binding)
-        public TaskDto() { }
-
-        // 2. Parameterized constructor with strict Fail-Fast validation
         public TaskDto(string title, string discreption, Status taskStatus, DateTime dueDate, Guid createdByUserId, Guid assignedToUserId)
         {
             if (string.IsNullOrWhiteSpace(title))

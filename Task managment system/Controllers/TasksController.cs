@@ -13,8 +13,13 @@ namespace Task_managment_system.Controllers
     public class TaskController : ControllerBase
     {
         private readonly TaskServices _taskServices;
-        private readonly ILogger<TaskController> logger;
-        //the constructor for DI
+        private readonly ILogger<TaskController> _logger;
+        
+        public TaskController(TaskServices taskServices, ILogger<TaskController> logger)
+        {
+            _taskServices = taskServices;
+            _logger = logger;
+        }
 
         [HttpGet]
         public ActionResult<List<TaskItem>> GetTasks([FromQuery] TaskFilters filters)
@@ -23,6 +28,10 @@ namespace Task_managment_system.Controllers
             var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var isAdmin = User.IsInRole("Admin");
 
+            if (currentUserId == null)
+            {
+                return BadRequest();
+            }
             //implement the customizedGetTasks in the TaskServices
             var listOfTasks = _taskServices.GetTasks(currentUserId, isAdmin, filters);
             
