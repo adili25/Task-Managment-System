@@ -1,10 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Task_Manager.Models;
 using Task_managment_system.Repositries;
-using System.Threading.Tasks;
 using Task_managment_system.DTO;
-using BCrypt.Net;
 using Task_managment_system.Services;
 
 namespace Task_managment_system.Controllers
@@ -25,57 +22,65 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterNewUser([FromBody] RegisterDto request)
+        public async Task<IActionResult> RegisterNewUser([FromBody] RegisterDto registerRequest)
         {
             _logger.LogInformation("--> statring the registeration");
 
-            if(request == default)
+            if(registerRequest == default)
             {
-                _logger.LogError("<-- the request payload is not valid");
-                return BadRequest("the request is Null");
+                _logger.LogWarning("<-- the payload is not valid");
+                return BadRequest("the registerRequest is empty(null)");
             }
 
-            _logger.LogInformation("creating new User");
+            _logger.LogInformation("--> creating new User");
             var newUser = new ApplicationUser(
-                request.FullName,
-                request.Email,
-                BCrypt.Net.BCrypt.HashPassword(request.PasswordHash),
-                request.Role
+                registerRequest.FullName,
+                registerRequest.Email,
+                BCrypt.Net.BCrypt.HashPassword(registerRequest.PasswordHash),
+                registerRequest.Role
             );
 
-            _logger.LogInformation("adding the User");
+            _logger.LogInformation("--> adding the User");
             _userRepo.AddUser(newUser);
 
-            return Ok(newUser);
+            return Ok(new 
+            {
+                message = "registration succussful",
+                userId = newUser.Id,
+                fullName = newUser.FullName,
+                role = newUser.Role
+            });
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> LoginUser([FromBody] LoginDto request)
+        public async Task<IActionResult> LoginUser([FromBody] LoginDto loginRequest)
         {
-            if (request == default)
+            _logger.LogInformation("--> statring the login with email = {email}", loginRequest.Email);
+
+            if (loginRequest == default)
             {
-                _logger.LogError("<-- the request payload is not valid");
-                return BadRequest("the request is Null");
+                _logger.LogError("<-- the payload is not valid");
+                return BadRequest("the loginRequest is empty(null)");
             }
 
-            var LoginUser = _userRepo.GetUserByEmail(request.Email);
+            var LoginUser = _userRepo.GetUserByEmail(loginRequest.Email);
 
-            if (LoginUser == default)
+            if (LoginUser == default || LoginUser.PasswordHash != loginRequest.PasswordHash)
             {
-                return BadRequest("Unauthrized User");
+                return Unauthorized("Unauthorized User");
             }    
-
-            if (LoginUser.PasswordHash != request.PasswordHash)
-            {
-                BadRequest("Password Not Valid");
-            }
 
             var JwtToken = _authServices.GenerateJwtToken(LoginUser.Id.ToString(), LoginUser.Email, LoginUser.Role);
 
+            if (JwtToken == null)
+            {
+                return BadRequest("missing information");
+            }
+            
             return Ok(new
             {
-                token = JwtToken,
-                message = "Authentication Succussful"
+                message = "Authentication Succussful",
+                token = JwtToken
             });
         }
     }

@@ -17,7 +17,7 @@ namespace Task_managment_system.Repositries
             //check null task
             if (task == default)
             {
-                throw new NullReferenceException("TASK_IS_NULL");
+                throw new ArgumentNullException("TASK_IS_NULL");
             }
 
             //if its not null add it to the database
@@ -25,10 +25,9 @@ namespace Task_managment_system.Repositries
         }
 
         //get all the Tasks as IEnumerable
-        public IEnumerable<TaskItem> GetAllTasks()
+        public IQueryable<TaskItem> GetAllTasks()
         {
-            //--here should me return it using yield return?--
-            return Tasks.AsEnumerable();
+            return Tasks.AsQueryable();
         }
 
         //get Task by Id
@@ -40,7 +39,7 @@ namespace Task_managment_system.Repositries
             //check if the user exist or not
             if (task == default)
             {
-                throw new NullReferenceException("TASK_IS_NULL");
+                throw new ArgumentException("TASK_IS_NULL");
             }
 
             return task;

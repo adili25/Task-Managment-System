@@ -12,49 +12,49 @@ namespace Task_managment_system.Services
         {
             _taskRepo = taskRepo;
         }
-        public List<TaskItem> GetTasks(string userId, bool isAdmin, TaskFilters filters)
+        public IQueryable<TaskItem> GetTasks(string userId, bool isAdmin, TaskFilters filters)
         {
-            List<TaskItem> tasks = _taskRepo.GetAllTasks().ToList();
+            var tasks = _taskRepo.GetAllTasks();
 
             if (!isAdmin)
             {
-                tasks = [.. tasks.Where(t => t.AssignedToUserId.ToString() == userId)];
+                tasks = tasks.Where(t => t.AssignedToUserId.ToString() == userId);
                 //[.. ] => tasks.Where(...).ToList();
             }
 
             if (filters.TitleOrDescription != null)
             {
-                tasks = [.. tasks.Where(t => t.Title.Contains(filters.TitleOrDescription) || t.Description.Contains(filters.TitleOrDescription))];
+                tasks = tasks.Where(t => t.Title.Contains(filters.TitleOrDescription) || t.Description.Contains(filters.TitleOrDescription));
             }
 
             if (filters.Status != null)
             {
-                tasks = [.. tasks.Where(t => t.TaskStatus == filters.Status)];
+                tasks = tasks.Where(t => t.TaskStatus == filters.Status);
             }
 
             if (filters.Priority != null)
             {
-                tasks = [.. tasks.Where(t => t.TaskPriority == filters.Priority)];
+                tasks = tasks.Where(t => t.TaskPriority == filters.Priority);
             }
 
             if (!string.IsNullOrEmpty(filters.AssignedId))
             {
-                tasks = [.. tasks.Where(t => t.AssignedToUserId.ToString() == filters.AssignedId)];
+                tasks = tasks.Where(t => t.AssignedToUserId.ToString() == filters.AssignedId);
             }
 
             if (!string.IsNullOrEmpty(filters.CreatorId))
             {
-                tasks = [.. tasks.Where(t => t.CreatedByUserId.ToString() == filters.CreatorId)];
+                tasks = tasks.Where(t => t.CreatedByUserId.ToString() == filters.CreatorId);
             }
 
             if (filters.FromDueDate != null)
             {
-                tasks = [.. tasks.Where(t => t.DueDate >= filters.FromDueDate)];
+                tasks = tasks.Where(t => t.DueDate >= filters.FromDueDate);
             }
 
             if (filters.ToDueDate != null)
             {
-                tasks = [.. tasks.Where(t => t.DueDate <= filters.ToDueDate)];
+                tasks = tasks.Where(t => t.DueDate <= filters.ToDueDate);
             }
 
             return tasks;
@@ -71,13 +71,10 @@ namespace Task_managment_system.Services
             return null;
         }
 
-        public bool AddTask(TaskItem task)
+        public TaskItem AddTask(TaskItem task)
         {
-            if (task == null)
-                return false;
-
             _taskRepo.AddTask(task);
-            return true;
+            return task;
         }
 
         public bool DeleteTask(TaskItem task)
@@ -88,6 +85,17 @@ namespace Task_managment_system.Services
             }
 
             else return false;
+        }
+
+        public void UpdateTask(TaskItem task, TaskDto updatedTask)
+        {
+            task.Title = updatedTask.Title;
+            task.Description = updatedTask.Discreption;
+            task.TaskStatus = updatedTask.TaskStatus;
+            task.DueDate = updatedTask.DueDate;
+            task.CreatedByUserId = updatedTask.CreatedByUserId;
+            task.AssignedToUserId = task.AssignedToUserId;
+            task.TaskPriority = updatedTask.Priority;
         }
     }
 }

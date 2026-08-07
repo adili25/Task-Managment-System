@@ -1,20 +1,23 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using Task_managment_system.Enums;
-using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 namespace Task_managment_system.Services
 {
-    public class AuthServices (IConfiguration config)
+    public class AuthServices (IConfiguration _config)
     {
-        private readonly string _secretKey = config["JwtSettings:Secret"];
-        private readonly string _audience = config["JwtSettings:Audience"];
-        private readonly string _issuer = config["JwtSettings:Issuer"];
-        public string GenerateJwtToken(string UserId, string Email, Roles Role)
+        private readonly string _secretKey = _config["JwtSettings:Secret"] ?? throw new InvalidOperationException("missing secret key in config file");
+        private readonly string _audience = _config["JwtSettings:Audience"] ?? throw new InvalidOperationException("missing audience in config file");
+        private readonly string _issuer = _config["JwtSettings:Issuer"] ?? throw new InvalidOperationException("missing issuer in config file");
+
+        public string? GenerateJwtToken(string UserId, string Email, Roles Role)
         {
+            if (string.IsNullOrEmpty(UserId) || string.IsNullOrEmpty(Email) || Role == null)
+            {
+                return null;
+            }
             //building the claims for the JWT
             var claim = new []
             {

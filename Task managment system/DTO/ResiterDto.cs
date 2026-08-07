@@ -18,27 +18,25 @@ namespace Task_managment_system.DTO
             {
                 throw new NullReferenceException("FULLNAME_IS_NULL");
             }
-            FullName = fullName;
-
 
             if (email == default)
             {
                 throw new NullReferenceException("EMAIL_IS_NULL");
             }
-            Email = email;
-
 
             if (fullName == default)
             {
                 throw new NullReferenceException("PASSWORD_IS_NULL");
             }
-            PasswordHash = passwordHash;
-
 
             if (role == default)
             {
                 throw new NullReferenceException("ROLE_IS_NULL");
             }
+
+            FullName = fullName;
+            Email = email;
+            PasswordHash = passwordHash;
             Role = role;
         }
     }
