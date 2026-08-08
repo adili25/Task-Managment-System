@@ -16,34 +16,45 @@ namespace Task_managment_system.Services
             _userRepo = userRepo;
         }
 
-
         public TaskSummaryReportDto CreateTasksReport(DateTime FromDate, DateTime ToDate)
         {
-            List<TaskItem> tasks = [.. _taskRepo.GetAllTasks()];
+            IQueryable<TaskItem> tasks =  _taskRepo.GetAllTasks();
 
             var StatusGroupedTasks = tasks.GroupBy(t => t.TaskStatus);
             
-            //first element in the report => Status: task count
+            //first element in the report => Dictionary<Status, taskCount>
             Dictionary<string, int> tasksByStatus = new Dictionary<string, int>();
             foreach (var group in StatusGroupedTasks)
             {
                 tasksByStatus[group.Key.ToString()] = group.Count(); 
             }
 
-            //second element in the report => number of unfinished overdue tasks
-            int numberOfOverDueTasks = tasks.Count(t => t.DueDate < DateTime.UtcNow && t.TaskStatus != Status.Completed);
+            /*
+    --> this is alternative solution to handel all the group and select in the sql server
 
-            //third element in the report
-            //sperate the users into groups based on the assignedToUserId
+    Dictionary<string, int> tasksByStatus = _taskRepo.GetAllTasks()
+    .GroupBy(t => t.TaskStatus)
+    .Select(g => new { 
+        Status = g.Key, 
+        TaskCount = g.Count() 
+    })
+    .ToDictionary(
+        result => result.Status.ToString(), 
+        result => result.TaskCount
+    );  
+            */
+
+            //second element in the report => number of unfinished overdue tasks
+            int numberOfOverDueTasks = _taskRepo.GetAllTasks().Count(t => t.DueDate < DateTime.UtcNow && t.TaskStatus != Status.Completed);
+
+            //third element in the report => sperate the users into groups based on the assignedToUserId
             var tasksPerUser = _taskRepo.GetAllTasks()
         
-             // 2. The Join Method
             .Join(
-                _userRepo.GetAllUsers(),               // The Inner Data (Users)
-                task => task.AssignedToUserId.ToString(),       // The Outer Key Selector (Task's reference to the user)
-                user => user.Id.ToString(),                                // The Inner Key Selector (User's actual ID)
+                _userRepo.GetAllUsers(),
+                task => task.AssignedToUserId.ToString(),
+                user => user.Id.ToString(),
             
-            // 3. The Result Selector (Creating the Anonymous Type)
                 (task, user) => new 
                 { 
                     TaskId = task.Id, 
@@ -51,37 +62,28 @@ namespace Task_managment_system.Services
                 }
             )
         
-        // 4. Group by the newly attached Full Name
             .GroupBy(joined => joined.UserFullName)
         
-        // 5. Convert directly to a Dictionary where Key = Name, Value = Count
             .ToDictionary(
-                group => group.Key,         // The key of the dictionary becomes the group's key (FullName)
-                group => group.Count()      // The value becomes the total number of items in that specific group
+                group => group.Key,
+                group => group.Count()
             );
 
             //fourth element in the report => high priority incomplete tasks
             int highPriorityIncompleteCount = _taskRepo.GetAllTasks().Count(t => t.TaskStatus != Status.Completed && (t.TaskPriority == Priority.High || t.TaskPriority == Priority.Critical));
         
             //fifth elemet in the report => Persentage of incompleted tasks from date to date
-            var fromToDateTasks = _taskRepo.GetAllTasks().Where(t => t.CreatedAt <= FromDate && t.DueDate >= ToDate);
-            var IncompletedTaskGroup = fromToDateTasks.GroupBy(t => t.TaskStatus);
-            int incompletedtasksCount = 0;
-            int completedtasksCount = 0;
-            foreach (var group in IncompletedTaskGroup)
-            {
-                if (group.Key == Status.Completed)
-                {
-                    completedtasksCount += group.Count();
-                }
-                else if (group.Key == Status.InProgress || group.Key == Status.Pending)
-                {
-                    incompletedtasksCount += group.Count();
-                }
-            }
+            var taskInRange = _taskRepo.GetAllTasks().Where(t => t.CreatedAt >= FromDate && t.DueDate <= ToDate).ToList();
+            double persentage = 0;
+            int totalTasks = taskInRange.Count();
 
-            double presentage = completedtasksCount/(completedtasksCount+incompletedtasksCount) / 100;
-            TaskSummaryReportDto report = new(tasksByStatus, numberOfOverDueTasks, tasksPerUser, highPriorityIncompleteCount, presentage);
+            if (totalTasks > 0)
+            {
+                int completedTasks = taskInRange.Count(t => t.TaskStatus == Status.Completed);
+                persentage = completedTasks / totalTasks * 100;
+            }
+          
+            TaskSummaryReportDto report = new(tasksByStatus, numberOfOverDueTasks, tasksPerUser, highPriorityIncompleteCount, Math.Round(persentage, 2));
             return report;
         }
     }

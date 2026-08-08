@@ -12,7 +12,7 @@ namespace Task_managment_system.Services
         {
             _taskRepo = taskRepo;
         }
-        public IQueryable<TaskItem> GetTasks(string userId, bool isAdmin, TaskFilters filters)
+        public IQueryable<TaskItem> GetFilteredTasks(string userId, bool isAdmin, TaskFilters filters)
         {
             var tasks = _taskRepo.GetAllTasks();
 
@@ -63,12 +63,7 @@ namespace Task_managment_system.Services
         public TaskItem? GetTaskById(string id)
         {
             var task = _taskRepo.GetTaskById(id);
-
-            if (task != null)
-            {
-                return task;
-            }
-            return null;
+            return task;
         }
 
         public TaskItem AddTask(TaskItem task)

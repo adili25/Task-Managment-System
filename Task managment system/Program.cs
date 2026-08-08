@@ -1,10 +1,8 @@
 using Task_Manager.Models;
 using Task_managment_system.Repositries;
+using Task_managment_system.Services;
 
 var builder = WebApplication.CreateBuilder();
-
-builder.Services.AddScoped<UserRepository>();
-builder.Services.AddScoped<TaskRepository>();
 
 builder.Services.AddAuthorization(options =>
 {

@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Task_Manager.Models;
-using Task_managment_system.Repositries;
 using Task_managment_system.DTO;
 using Task_managment_system.Services;
 
@@ -11,12 +10,12 @@ namespace Task_managment_system.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthServices _authServices;
-        private readonly UserRepository _userRepo;
+        private readonly UserServices _userServices;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController( AuthServices authServices, UserRepository userRepo, ILogger<AuthController> logger)
+        public AuthController(AuthServices authServices, UserServices userServices, ILogger<AuthController> logger)
         {
-            _userRepo = userRepo;
+            _userServices = userServices;
             _authServices = authServices;
             _logger = logger;
         }
@@ -41,8 +40,9 @@ namespace Task_managment_system.Controllers
             );
 
             _logger.LogInformation("--> adding the User");
-            _userRepo.AddUser(newUser);
 
+            _userServices.AddUser(newUser);
+            
             return Ok(new 
             {
                 message = "registration succussful",
@@ -63,14 +63,14 @@ namespace Task_managment_system.Controllers
                 return BadRequest("the loginRequest is empty(null)");
             }
 
-            var LoginUser = _userRepo.GetUserByEmail(loginRequest.Email);
+            var loginUser = _userServices.GetUserByEmail(loginRequest.Email);
 
-            if (LoginUser == default || LoginUser.PasswordHash != loginRequest.PasswordHash)
+            if (loginUser == default || !BCrypt.Net.BCrypt.Verify(loginRequest.PasswordHash, loginUser.PasswordHash))
             {
                 return Unauthorized("Unauthorized User");
             }    
 
-            var JwtToken = _authServices.GenerateJwtToken(LoginUser.Id.ToString(), LoginUser.Email, LoginUser.Role);
+            var JwtToken = _authServices.GenerateJwtToken(loginUser.Id.ToString(), loginUser.Email, loginUser.Role);
 
             if (JwtToken == null)
             {

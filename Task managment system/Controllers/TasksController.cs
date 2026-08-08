@@ -35,7 +35,7 @@ namespace Task_managment_system.Controllers
                 return Unauthorized("the user is not registed");
             }
 
-            var listOfTasks = _taskServices.GetTasks(currentUserId, isAdmin, filters);
+            var listOfTasks = _taskServices.GetFilteredTasks(currentUserId, isAdmin, filters);
             //no need for the nullity check, if no tasks return empty list;
             _logger.LogInformation("fetching tasks succussful");
 

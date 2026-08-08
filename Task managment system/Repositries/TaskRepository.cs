@@ -12,16 +12,17 @@ namespace Task_managment_system.Repositries
         private readonly List<TaskItem> Tasks = [];
 
         //add task to the database (Tasks)
-        public void AddTask(TaskItem task)
+        public bool AddTask(TaskItem task)
         {
             //check null task
             if (task == default)
             {
-                throw new ArgumentNullException("TASK_IS_NULL");
+                return false;
             }
 
             //if its not null add it to the database
             Tasks.Add(task);
+            return true;
         }
 
         //get all the Tasks as IEnumerable
@@ -31,17 +32,10 @@ namespace Task_managment_system.Repositries
         }
 
         //get Task by Id
-        public TaskItem GetTaskById(string id)
+        public TaskItem? GetTaskById(string id)
         {
             //fetching the user from Users
             TaskItem? task = Tasks.FirstOrDefault(t => t.Id.ToString() == id);
-
-            //check if the user exist or not
-            if (task == default)
-            {
-                throw new ArgumentException("TASK_IS_NULL");
-            }
-
             return task;
         }
 
