@@ -21,21 +21,28 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterNewUser([FromBody] RegisterDto registerRequest)
+        public IActionResult RegisterNewUser([FromBody] RegisterDto registerRequest)
         {
             _logger.LogInformation("--> statring the registeration");
 
+            //the [apicontroller] automaticlly check the registerRequest, so no need for this validations
             if(registerRequest == default)
             {
                 _logger.LogWarning("<-- the payload is not valid");
-                return BadRequest("the registerRequest is empty(null)");
+                return BadRequest("---the registerRequest is null---");
+            }
+
+            if (_userServices.GetUserByEmail(registerRequest.Email) != null)
+            {
+                _logger.LogWarning("<-- the registed email is already taken");
+                return BadRequest("---the registed email is already taken---");
             }
 
             _logger.LogInformation("--> creating new User");
             var newUser = new ApplicationUser(
                 registerRequest.FullName,
                 registerRequest.Email,
-                BCrypt.Net.BCrypt.HashPassword(registerRequest.PasswordHash),
+                BCrypt.Net.BCrypt.HashPassword(registerRequest.Password),
                 registerRequest.Role
             );
 
@@ -45,7 +52,7 @@ namespace Task_managment_system.Controllers
             
             return Ok(new 
             {
-                message = "registration succussful",
+                message = "---registration succussful---",
                 userId = newUser.Id,
                 fullName = newUser.FullName,
                 role = newUser.Role
@@ -53,33 +60,36 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> LoginUser([FromBody] LoginDto loginRequest)
+        public IActionResult LoginUser([FromBody] LoginDto loginRequest)
         {
             _logger.LogInformation("--> statring the login with email = {email}", loginRequest.Email);
 
+            //the [apicontroller] automaticlly check the registerRequest, so no need for this validations
             if (loginRequest == default)
             {
                 _logger.LogError("<-- the payload is not valid");
-                return BadRequest("the loginRequest is empty(null)");
+                return BadRequest("---the loginRequest is null---");
             }
 
             var loginUser = _userServices.GetUserByEmail(loginRequest.Email);
 
-            if (loginUser == default || !BCrypt.Net.BCrypt.Verify(loginRequest.PasswordHash, loginUser.PasswordHash))
+            if (loginUser == default || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, loginUser.PasswordHash))
             {
-                return Unauthorized("Unauthorized User");
+                _logger.LogWarning("<-- the user unauthorized");
+                return Unauthorized("---Unauthorized User---");
             }    
 
             var JwtToken = _authServices.GenerateJwtToken(loginUser.Id.ToString(), loginUser.Email, loginUser.Role);
 
             if (JwtToken == null)
             {
-                return BadRequest("missing information");
+                _logger.LogWarning("<-- error while creating JWT");
+                return BadRequest("--missing information---");
             }
             
             return Ok(new
             {
-                message = "Authentication Succussful",
+                message = "---Authentication Succussful---",
                 token = JwtToken
             });
         }

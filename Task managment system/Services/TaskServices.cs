@@ -19,7 +19,6 @@ namespace Task_managment_system.Services
             if (!isAdmin)
             {
                 tasks = tasks.Where(t => t.AssignedToUserId.ToString() == userId);
-                //[.. ] => tasks.Where(...).ToList();
             }
 
             if (filters.TitleOrDescription != null)
@@ -88,9 +87,9 @@ namespace Task_managment_system.Services
             task.Description = updatedTask.Discreption;
             task.TaskStatus = updatedTask.TaskStatus;
             task.DueDate = updatedTask.DueDate;
-            task.CreatedByUserId = updatedTask.CreatedByUserId;
-            task.AssignedToUserId = task.AssignedToUserId;
+            task.AssignedToUserId = updatedTask.AssignedToUserId;
             task.TaskPriority = updatedTask.Priority;
+            task.UpdatedAt = DateTime.UtcNow;
         }
     }
 }

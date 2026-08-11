@@ -3,22 +3,22 @@
     public class LoginDto
     {
         public string Email { set; get; }
-        public string PasswordHash { set; get; }
+        public string Password { set; get; }
 
-        public LoginDto(string email, string passwordHash)
+        public LoginDto(string email, string password)
         {
             if (string.IsNullOrWhiteSpace(email))
             {
                 throw new ArgumentException("Email cannot be null or empty.", nameof(email));
             }
 
-            if (string.IsNullOrWhiteSpace(passwordHash))
+            if (string.IsNullOrWhiteSpace(password))
             {
-                throw new ArgumentException("Password cannot be null or empty.", nameof(passwordHash));
+                throw new ArgumentException("Password cannot be null or empty.", nameof(password));
             }
 
             Email = email;
-            PasswordHash = passwordHash;
+            Password = password;
         }
     }
 }

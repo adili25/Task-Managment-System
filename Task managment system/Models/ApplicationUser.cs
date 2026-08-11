@@ -18,7 +18,7 @@ namespace Task_Manager.Models
         
         public ApplicationUser(string fullName, string email, string passwordHash, Roles role)
         {
-            if (FullName == default)
+            if (fullName == default)
             {
                 throw new ArgumentNullException("Null_FullName: must be a string");
             }
@@ -36,12 +36,7 @@ namespace Task_Manager.Models
             }
             PasswordHash = passwordHash;
 
-            if (role == default)
-            {
-                throw new ArgumentNullException("Null_Role: Must Be A String");
-            }
             Role = role;
-
             Id = Guid.NewGuid();
         }
     

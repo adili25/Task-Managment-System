@@ -8,16 +8,17 @@ namespace Task_managment_system.Services
 {
     public class AuthServices (IConfiguration _config)
     {
-        private readonly string _secretKey = _config["JwtSettings:Secret"] ?? throw new InvalidOperationException("missing secret key in config file");
-        private readonly string _audience = _config["JwtSettings:Audience"] ?? throw new InvalidOperationException("missing audience in config file");
-        private readonly string _issuer = _config["JwtSettings:Issuer"] ?? throw new InvalidOperationException("missing issuer in config file");
+        private readonly string _secretKey = _config["JwtSettings:Secret"] ?? throw new InvalidOperationException("---missing secret key in config file---");
+        private readonly string _audience = _config["JwtSettings:Audience"] ?? throw new InvalidOperationException("---missing audience in config file---");
+        private readonly string _issuer = _config["JwtSettings:Issuer"] ?? throw new InvalidOperationException("---missing issuer in config file---");
 
         public string? GenerateJwtToken(string UserId, string Email, Roles Role)
         {
-            if (string.IsNullOrEmpty(UserId) || string.IsNullOrEmpty(Email) || Role == null)
+            if (string.IsNullOrEmpty(UserId) || string.IsNullOrEmpty(Email))
             {
                 return null;
             }
+
             //building the claims for the JWT
             var claim = new []
             {
@@ -36,7 +37,7 @@ namespace Task_managment_system.Services
                     issuer: _issuer,
                     audience: _audience,
                     claims: claim,
-                    expires: DateTime.UtcNow.AddMinutes(15),
+                    expires: DateTime.UtcNow.AddMinutes(120),
                     signingCredentials: cred
                 );
 

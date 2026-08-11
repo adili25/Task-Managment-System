@@ -80,7 +80,7 @@ namespace Task_managment_system.Services
             if (totalTasks > 0)
             {
                 int completedTasks = taskInRange.Count(t => t.TaskStatus == Status.Completed);
-                persentage = completedTasks / totalTasks * 100;
+                persentage = (double)completedTasks / totalTasks * 100;
             }
           
             TaskSummaryReportDto report = new(tasksByStatus, numberOfOverDueTasks, tasksPerUser, highPriorityIncompleteCount, Math.Round(persentage, 2));

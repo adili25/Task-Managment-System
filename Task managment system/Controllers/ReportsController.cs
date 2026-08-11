@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Task_managment_system.Services;
 using Task_managment_system.DTO;
+using Task_managment_system.Enums;
 
 namespace Task_managment_system.Controllers
 {
@@ -18,14 +19,15 @@ namespace Task_managment_system.Controllers
             _reportServices = reportServices;
         }
 
-        /*
-        The Fix: For GET requests filtering by date, you should pass the parameters in the URL query string. Change both attributes to [FromQuery]. This means a frontend application will call your API like this: /api/reports/task-summary?FromDate=2026-08-01&ToDate=2026-08-31
-        */
         [HttpGet("task-summary")]
         public IActionResult TasksReport([FromQuery] DateTime FromDate, [FromQuery] DateTime ToDate)
         {
             TaskSummaryReportDto report = _reportServices.CreateTasksReport(FromDate, ToDate);
-            return Ok(report);
+            return Ok(new
+            {
+                message = "Tasks Report Successfully",
+                report = report
+            });
         }
     }
 }

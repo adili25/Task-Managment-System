@@ -35,12 +35,7 @@ namespace Task_Manager.Models
                 throw new ArgumentNullException("Null_Descreption: Must Be A String");
             }
 
-            if (priority == default)
-            {
-                throw new ArgumentNullException("Null_Priority: Must Be A String");
-            }
-
-            if (DueDate == default)
+            if (dueDate == default)
             {
                 throw new ArgumentNullException("Null_DueDate: Must Be A String");
             }
@@ -48,11 +43,6 @@ namespace Task_Manager.Models
             if (createdByUserId == default)
             {
                 throw new ArgumentNullException("Null_CreatedBy: Must Be A String");
-            }
-
-            if (assignedToUserId == default)
-            {
-                throw new ArgumentNullException("Null_AssingedTo: Must Be A String");
             }
 
             Id = Guid.NewGuid();

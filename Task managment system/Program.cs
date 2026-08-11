@@ -1,76 +1,170 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Task_managment_system.Extentions;
 using Task_managment_system.Repositries;
 using Task_managment_system.Services;
 
-var builder = WebApplication.CreateBuilder();
+var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-        ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"])) ?? throw new ArgumentNullException("missing the Secret key in config file")
-    };
-});
+// ============================================================
+// JWT Authentication
+// ============================================================
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("Admin", Policy =>
+var issuer = builder.Configuration["JwtSettings:Issuer"]
+    ?? throw new InvalidOperationException(
+        "Missing JwtSettings:Issuer in configuration.");
+
+var audience = builder.Configuration["JwtSettings:Audience"]
+    ?? throw new InvalidOperationException(
+        "Missing JwtSettings:Audience in configuration.");
+
+var secret = builder.Configuration["JwtSettings:Secret"]
+    ?? throw new InvalidOperationException(
+        "Missing JwtSettings:Secret in configuration.");
+
+builder.Services
+    .AddAuthentication(options =>
     {
-        Policy.RequireRole("Admin");
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = issuer,
+            ValidAudience = audience,
+
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(secret))
+        };
+
+        // Logs the real reason a token was rejected instead of a blank challenge.
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                Console.WriteLine($"---> JWT MESSAGE RECEIVED. Token present: {!string.IsNullOrEmpty(context.Token)}");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine("---> JWT TOKEN VALIDATED SUCCESSFULLY");
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"---> JWT VALIDATION FAILED: {context.Exception.Message}");
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                Console.WriteLine($"---> JWT AUTH CHALLENGE. Error: '{context.Error}', Description: '{context.ErrorDescription}', AuthFailure: '{context.AuthenticateFailure?.Message}'");
+                return Task.CompletedTask;
+            },
+            OnForbidden = context =>
+            {
+                Console.WriteLine("---> JWT FORBIDDEN (authenticated but role/policy check failed)");
+                return Task.CompletedTask;
+            }
+        };
     });
-});
 
 
-//singleton DI lifetime so the repo hold data through the whole app lifetime
+// ============================================================
+// Authorization
+// ============================================================
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("Admin", policy =>
+    {
+        policy.RequireRole("Admin");
+    });
+
+
+// ============================================================
+// Dependency Injection
+// ============================================================
+
+// Singleton repositories because they hold application data
+// for the lifetime of the application.
 builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<TaskRepository>();
 
+// Scoped services
 builder.Services.AddScoped<AuthServices>();
 builder.Services.AddScoped<TaskServices>();
 builder.Services.AddScoped<ReportServices>();
 builder.Services.AddScoped<UserServices>();
 
+
+// ============================================================
+// Controllers
+// ============================================================
+
 builder.Services.AddControllers();
-builder.Services.AddSwaggerGen();
 
-/*
----THE ORDER OF MIDDLEWARE PIPELINE---
 
-1- Development Tools (Swagger): You configure the UI documentation to only load if the application is in a development environment.
-2- HTTPS Redirection: You force any unencrypted HTTP traffic to securely bounce to an encrypted HTTPS port.
-3- Authentication (Who are you?): The application intercepts the request, reads the JWT from the HTTP headers, validates the signature, and extracts the claims.
-4- Authorization (What are you allowed to do?): Now that the app knows who the user is, it checks if they have the specific Roles or Policies required to move forward.
-5- Controller Mapping: The secure, validated request is finally routed to the correct endpoint in your TaskController or ReportsController.
-*/
+// ============================================================
+// Swagger
+// ============================================================
+
+builder.Services.AddSwaggerWithJwt();
+
+
+// ============================================================
+// CORS
+// ============================================================
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
+
+// ============================================================
+// Build application
+// ============================================================
 
 var app = builder.Build();
 
+
+// ============================================================
+// Swagger
+// ============================================================
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerWithJwt();
 }
 
-app.UseHttpsRedirection();
+
+// ============================================================
+// Middleware Pipeline
+// ============================================================
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
+
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
-
-
-
-

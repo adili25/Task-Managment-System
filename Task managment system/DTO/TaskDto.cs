@@ -32,7 +32,7 @@ namespace Task_managment_system.DTO
         [Required(ErrorMessage = "The Task Priority required.")]
         public Priority Priority { get; set; }
 
-        public TaskDto(string title, string discreption, Status taskStatus, DateTime dueDate, Guid createdByUserId, Guid assignedToUserId)
+        public TaskDto(string title, string discreption, Status taskStatus, DateTime dueDate, Guid assignedToUserId)
         {
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -44,17 +44,11 @@ namespace Task_managment_system.DTO
                 throw new ArgumentException("Description cannot be null or empty.", nameof(discreption));
             }
 
-            if (createdByUserId == Guid.Empty)
-            {
-                throw new ArgumentException("Creator ID cannot be an empty Guid.", nameof(createdByUserId));
-            }
-
             // If all validation passes, assign the values
             Title = title;
             Discreption = discreption;
             TaskStatus = taskStatus;
             DueDate = dueDate;
-            CreatedByUserId = createdByUserId;
             AssignedToUserId = assignedToUserId;
         }
     }
