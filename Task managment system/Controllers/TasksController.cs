@@ -31,7 +31,7 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<TaskItem>> GetTasks([FromQuery] TaskFilters filters)
+        public async Task<ActionResult<List<TaskItem>>> GetTasks([FromQuery] TaskFilters filters)
         {
             _logger.LogInformation("--> starting getting Tasks");
 
@@ -44,7 +44,7 @@ namespace Task_managment_system.Controllers
                 return Unauthorized("---the user is not registed---");
             }
 
-            var listOfTasks = _taskServices.GetFilteredTasks(currentUserId, isAdmin, filters);
+            var listOfTasks = await _taskServices.GetFilteredTasks(currentUserId, isAdmin, filters);
             //no need for the nullity check, if no tasks return empty list;
             _logger.LogInformation("--> fetching tasks succussful");
 
@@ -56,10 +56,10 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpGet("{id}")]
-        public ActionResult<TaskItem> GetTaskById([FromRoute] string id)
+        public async Task<ActionResult<TaskItem>> GetTaskById([FromRoute] string id)
         {
             _logger.LogInformation("--> starting getting task with id");
-            var task = _taskServices.GetTaskById(id);
+            var task = await _taskServices.GetTaskById(id);
 
             if (task == null)
             {
@@ -76,7 +76,7 @@ namespace Task_managment_system.Controllers
             }
 
             _logger.LogInformation("--> fetching task succussful");
-            
+
             return Ok(new
             {
                 message = "---fetching task succussful---",
@@ -85,16 +85,24 @@ namespace Task_managment_system.Controllers
         }
         
         [HttpPost]
-        public IActionResult CreateTask([FromBody] TaskDto requestTask)
+        public async Task<ActionResult> CreateTask([FromBody] TaskDto requestTask)
         {
             _logger.LogInformation("--> starting creating task");
+
+            var (currentUserId, IsAdmin) = IsAuthorized();
+
+            if (currentUserId == null)
+            {
+                _logger.LogWarning("<-- the user is not registerd");
+                return Unauthorized("---the user is not registed---");
+            }
 
             TaskItem newTask = new (
                     requestTask.Title,
                     requestTask.Discreption,
                     requestTask.Priority,
                     requestTask.DueDate,
-                    requestTask.CreatedByUserId,
+                    Guid.Parse(currentUserId),
                     requestTask.AssignedToUserId
                 );
 
@@ -110,11 +118,11 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPatch("{id}")]
-        public IActionResult UpdateTask([FromRoute] string id, [FromBody] TaskDto recievedUpdatedTask)
+        public async Task<ActionResult> UpdateTask([FromRoute] string id, [FromBody] TaskDto recievedUpdatedTask)
         {
             _logger.LogInformation("--> starting updating task");
 
-            var task = _taskServices.GetTaskById(id);
+            var task = await _taskServices.GetTaskById(id);
             if (task == null)
             {
                 _logger.LogWarning("<-- the task with given id not found");
@@ -143,7 +151,7 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteTask([FromRoute] string id)
+        public async Task<ActionResult> DeleteTask([FromRoute] string id)
         {
             _logger.LogInformation("--> starting deleting task");
 
@@ -153,7 +161,7 @@ namespace Task_managment_system.Controllers
                 return BadRequest();
             }
 
-            var task = _taskServices.GetTaskById(id);
+            var task = await _taskServices.GetTaskById(id);
             if (task == null)
             {
                 _logger.LogWarning("<-- the task with given id not found");
@@ -169,7 +177,7 @@ namespace Task_managment_system.Controllers
                 return StatusCode(StatusCodes.Status403Forbidden, "---the user is not authrized---");
             }
 
-            if (_taskServices.DeleteTask(task))
+            if (await _taskServices.DeleteTask(task))
             {
                 _logger.LogInformation("--> deleting task succussful");
                 return NoContent();

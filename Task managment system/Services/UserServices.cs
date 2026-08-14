@@ -1,35 +1,36 @@
 using Task_managment_system.Repositries;
 using Task_Manager.Models;
 using System;
+using Task_managment_system.Interfaces;
 
 namespace Task_managment_system.Services
 {
     public class UserServices
     {
-        private readonly UserRepository _userRepo;
+        private readonly IUserRepository _userRepo;
 
-        public UserServices(UserRepository userRepo)
+        public UserServices(IUserRepository userRepo)
         {
             _userRepo = userRepo;
         }
 
-        public void AddUser(ApplicationUser user)
+        public async Task AddUser(ApplicationUser user)
         {
             _userRepo.AddUser(user);
         }
 
-        public IQueryable<ApplicationUser> GetAllUsers()
+        public async Task<IQueryable<ApplicationUser>> GetAllUsers()
         {
-            return _userRepo.GetAllUsers();
+            return await _userRepo.GetAllUsers();
         }
-        public ApplicationUser? GetUserById(Guid id)
+        public async Task<ApplicationUser?> GetUserById(Guid id)
         {
-            return _userRepo.GetUserById(id);
+            return await _userRepo.GetUserById(id);
         }
 
-        public ApplicationUser? GetUserByEmail(string email)
+        public async Task<ApplicationUser?> GetUserByEmail(string email)
         {
-            return _userRepo.GetUserByEmail(email);
+            return await _userRepo.GetUserByEmail(email);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Task_Manager.Models;
 using Task_managment_system.DTO;
+using Task_managment_system.Interfaces;
 using Task_managment_system.Services;
 
 namespace Task_managment_system.Controllers
@@ -21,7 +22,7 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult RegisterNewUser([FromBody] RegisterDto registerRequest)
+        public async Task<ActionResult> RegisterNewUser([FromBody] RegisterDto registerRequest)
         {
             _logger.LogInformation("--> statring the registeration");
 
@@ -60,7 +61,7 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult LoginUser([FromBody] LoginDto loginRequest)
+        public async Task<ActionResult> LoginUser([FromBody] LoginDto loginRequest)
         {
             _logger.LogInformation("--> statring the login with email = {email}", loginRequest.Email);
 
@@ -71,7 +72,7 @@ namespace Task_managment_system.Controllers
                 return BadRequest("---the loginRequest is null---");
             }
 
-            var loginUser = _userServices.GetUserByEmail(loginRequest.Email);
+            var loginUser = await _userServices.GetUserByEmail(loginRequest.Email);
 
             if (loginUser == default || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, loginUser.PasswordHash))
             {

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Task_managment_system.Extentions;
+using Task_managment_system.Interfaces;
 using Task_managment_system.Repositries;
 using Task_managment_system.Services;
 
@@ -94,8 +95,8 @@ builder.Services.AddAuthorizationBuilder()
 
 // Singleton repositories because they hold application data
 // for the lifetime of the application.
-builder.Services.AddSingleton<UserRepository>();
-builder.Services.AddSingleton<TaskRepository>();
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<ITaskRepository, TaskRepository>();
 
 // Scoped services
 builder.Services.AddScoped<AuthServices>();

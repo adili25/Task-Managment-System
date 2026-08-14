@@ -1,20 +1,21 @@
 ﻿using Task_Manager.Models;
 using Task_managment_system.DTO;
+using Task_managment_system.Interfaces;
 using Task_managment_system.Repositries;
 
 namespace Task_managment_system.Services
 {
     public class TaskServices
     {
-        private readonly TaskRepository _taskRepo;
+        private readonly ITaskRepository _taskRepo;
 
-        public TaskServices(TaskRepository taskRepo)
+        public TaskServices(ITaskRepository taskRepo)
         {
             _taskRepo = taskRepo;
         }
-        public IQueryable<TaskItem> GetFilteredTasks(string userId, bool isAdmin, TaskFilters filters)
+        public async Task<IQueryable<TaskItem>> GetFilteredTasks(string userId, bool isAdmin, TaskFilters filters)
         {
-            var tasks = _taskRepo.GetAllTasks();
+            var tasks = await _taskRepo.GetAllTasks();
 
             if (!isAdmin)
             {
@@ -59,21 +60,21 @@ namespace Task_managment_system.Services
             return tasks;
         }
 
-        public TaskItem? GetTaskById(string id)
+        public async Task<TaskItem?> GetTaskById(string id)
         {
-            var task = _taskRepo.GetTaskById(id);
+            var task = await _taskRepo.GetTaskById(id);
             return task;
         }
 
-        public TaskItem AddTask(TaskItem task)
+        public async Task<TaskItem> AddTask(TaskItem task)
         {
             _taskRepo.AddTask(task);
             return task;
         }
 
-        public bool DeleteTask(TaskItem task)
+        public async Task<bool> DeleteTask(TaskItem task)
         {
-            if (_taskRepo.DeleteTask(task.Id.ToString()))
+            if (await _taskRepo.DeleteTask(task.Id.ToString()))
             {
                 return true;
             }
@@ -81,7 +82,7 @@ namespace Task_managment_system.Services
             else return false;
         }
 
-        public void UpdateTask(TaskItem task, TaskDto updatedTask)
+        public async Task UpdateTask(TaskItem task, TaskDto updatedTask)
         {
             task.Title = updatedTask.Title;
             task.Description = updatedTask.Discreption;
