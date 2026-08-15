@@ -4,6 +4,8 @@ using Task_managment_system.Repositries;
 using Task_Manager.Models;
 using Task_managment_system.DTO;
 using Task_managment_system.Services;
+using Task_managment_system.Exceptions;
+
 
 namespace Task_managment_system.Controllers
 {
@@ -16,10 +18,15 @@ namespace Task_managment_system.Controllers
         private readonly ILogger<TaskController> _logger;
         
         //helper method to fetch the UserId from Claims, and isAdmin 
-        private (string? currentUserId, bool isAdmin) IsAuthorized()
+        private (string currentUserId, bool isAdmin) GetUserIdIsAdmin()
         {
             var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var isAdmin = User.IsInRole("Admin");
+
+            if (currentUserId == null)
+            {
+                throw new UnauthorizedException("the user is not authorized");
+            }
 
             return (currentUserId, isAdmin);
         }
@@ -36,13 +43,7 @@ namespace Task_managment_system.Controllers
             _logger.LogInformation("--> starting getting Tasks");
 
             //the business rules: if the user was Admin => get all the tasks, if user was a Regualar User => get the tasks assigned to them
-            var (currentUserId, isAdmin) = IsAuthorized();
-
-            if (currentUserId == null)
-            {
-                _logger.LogWarning("<-- the user is not registerd");
-                return Unauthorized("---the user is not registed---");
-            }
+            var (currentUserId, isAdmin) = GetUserIdIsAdmin();
 
             var listOfTasks = await _taskServices.GetFilteredTasks(currentUserId, isAdmin, filters);
             //no need for the nullity check, if no tasks return empty list;
@@ -59,21 +60,9 @@ namespace Task_managment_system.Controllers
         public async Task<ActionResult<TaskItem>> GetTaskById([FromRoute] string id)
         {
             _logger.LogInformation("--> starting getting task with id");
-            var task = await _taskServices.GetTaskById(id);
+            var (currentUserId, isAdmin) = GetUserIdIsAdmin();
 
-            if (task == null)
-            {
-                _logger.LogWarning("<-- no task with ID {id}", id);
-                return NotFound($"---no task with ID {id}---");
-            }
-
-            var (currentUserId, isAdmin) = IsAuthorized();
-
-            if (task.CreatedByUserId.ToString() != currentUserId && task.AssignedToUserId.ToString() != currentUserId && !isAdmin)
-            {
-                _logger.LogWarning("<--the user is not authrized");
-                return StatusCode(StatusCodes.Status403Forbidden, "---the user is not authrized---");
-            }
+            var task = await _taskServices.GetTaskById(id, currentUserId, isAdmin);
 
             _logger.LogInformation("--> fetching task succussful");
 
@@ -89,13 +78,7 @@ namespace Task_managment_system.Controllers
         {
             _logger.LogInformation("--> starting creating task");
 
-            var (currentUserId, IsAdmin) = IsAuthorized();
-
-            if (currentUserId == null)
-            {
-                _logger.LogWarning("<-- the user is not registerd");
-                return Unauthorized("---the user is not registed---");
-            }
+            var (currentUserId, IsAdmin) = GetUserIdIsAdmin();
 
             TaskItem newTask = new (
                     requestTask.Title,
@@ -107,7 +90,6 @@ namespace Task_managment_system.Controllers
                 );
 
             var createdTask = _taskServices.AddTask(newTask);
-
             _logger.LogInformation("--> creating task succussful");
 
             return CreatedAtAction(
@@ -120,26 +102,14 @@ namespace Task_managment_system.Controllers
         [HttpPatch("{id}")]
         public async Task<ActionResult> UpdateTask([FromRoute] string id, [FromBody] TaskDto recievedUpdatedTask)
         {
+
             _logger.LogInformation("--> starting updating task");
+            var (currentUserId, isAdmin) = GetUserIdIsAdmin();
 
-            var task = await _taskServices.GetTaskById(id);
-            if (task == null)
-            {
-                _logger.LogWarning("<-- the task with given id not found");
-                return NotFound("---the task with given id not found---");
-            }
-
-            var (currentUserId, isAdmin) = IsAuthorized();
-
-            if (task.CreatedByUserId.ToString() != currentUserId && task.AssignedToUserId.ToString() != currentUserId && !isAdmin)
-            {
-                _logger.LogWarning("<-- unauthorized user");
-                return StatusCode(StatusCodes.Status403Forbidden, "---the user is not authrized---");
-            }
+            var task = await _taskServices.GetTaskById(id, currentUserId, isAdmin);
 
             _logger.LogInformation("--> updating the tasks");
-
-            _taskServices.UpdateTask(task, recievedUpdatedTask);
+            await _taskServices.UpdateTask(task, recievedUpdatedTask);
 
             _logger.LogInformation("--> updating task succussful");
 
@@ -154,28 +124,9 @@ namespace Task_managment_system.Controllers
         public async Task<ActionResult> DeleteTask([FromRoute] string id)
         {
             _logger.LogInformation("--> starting deleting task");
+            var (currentUserId, IsAdmin) = GetUserIdIsAdmin();
 
-            if (id == null)
-            {
-                _logger.LogWarning("<-- the id is null");
-                return BadRequest();
-            }
-
-            var task = await _taskServices.GetTaskById(id);
-            if (task == null)
-            {
-                _logger.LogWarning("<-- the task with given id not found");
-                return NotFound("---The Task With Given Id Not Found---");
-            }
-
-            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            var isAdmin = User.IsInRole("Admin");  
-            
-            if (task.CreatedByUserId.ToString() != currentUserId && task.AssignedToUserId.ToString() != currentUserId && !isAdmin)
-            {
-                _logger.LogWarning("<-- unauthorized user");
-                return StatusCode(StatusCodes.Status403Forbidden, "---the user is not authrized---");
-            }
+            var task = await _taskServices.GetTaskById(id, currentUserId, IsAdmin);
 
             if (await _taskServices.DeleteTask(task))
             {

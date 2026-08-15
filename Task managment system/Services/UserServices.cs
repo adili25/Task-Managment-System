@@ -1,6 +1,7 @@
-using Task_managment_system.Repositries;
-using Task_Manager.Models;
+using Microsoft.AspNetCore.Identity.Data;
 using System;
+using Task_Manager.Models;
+using Task_managment_system.Exceptions;
 using Task_managment_system.Interfaces;
 
 namespace Task_managment_system.Services
@@ -16,7 +17,7 @@ namespace Task_managment_system.Services
 
         public async Task AddUser(ApplicationUser user)
         {
-            _userRepo.AddUser(user);
+            await _userRepo.AddUser(user);
         }
 
         public async Task<IQueryable<ApplicationUser>> GetAllUsers()
@@ -31,6 +32,35 @@ namespace Task_managment_system.Services
         public async Task<ApplicationUser?> GetUserByEmail(string email)
         {
             return await _userRepo.GetUserByEmail(email);
+        }
+
+        public async Task CheckRegistedEmail(string email)
+        {
+            var user = _userRepo.GetUserByEmail(email);
+
+            if (user is not null)
+            {
+                throw new ConflictException("the email is already taken");
+            }
+
+            return;
+        }
+
+        public async Task<ApplicationUser> UserVarification(string email, string password)
+        {
+            var loginUser = await _userRepo.GetUserByEmail(email);
+
+            if (loginUser is null)
+            {
+                throw new NotFoundException($"the user email:{email} not found");
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(password, loginUser.PasswordHash))
+            {
+                throw new UnauthorizedException("the user entered invalid password");
+            }
+
+            return loginUser;
         }
     }
 }

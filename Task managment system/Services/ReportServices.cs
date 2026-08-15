@@ -3,7 +3,7 @@ using Task_Manager.Models;
 using Task_managment_system.DTO;
 using Task_managment_system.Enums;
 using Task_managment_system.Interfaces;
-using Task_managment_system.Repositries;
+using Task_managment_system.Exceptions;
 
 namespace Task_managment_system.Services
 {
@@ -94,6 +94,11 @@ namespace Task_managment_system.Services
 
         public async Task<TaskSummaryReportDto> CreateTasksReport(DateTime FromDate, DateTime ToDate)
         {
+            if (FromDate < ToDate)
+            {
+                throw new ValidationException("The FromDate is after ToDate");
+            }
+
             IQueryable<TaskItem> tasks =  await _taskRepo.GetAllTasks();
             IQueryable<ApplicationUser> users = await _userRepo.GetAllUsers();
 

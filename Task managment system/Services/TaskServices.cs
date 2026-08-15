@@ -1,7 +1,7 @@
 ﻿using Task_Manager.Models;
 using Task_managment_system.DTO;
 using Task_managment_system.Interfaces;
-using Task_managment_system.Repositries;
+using Task_managment_system.Exceptions;
 
 namespace Task_managment_system.Services
 {
@@ -13,6 +13,15 @@ namespace Task_managment_system.Services
         {
             _taskRepo = taskRepo;
         }
+
+        private bool IsNotAuthorized(TaskItem task, string currentUserId, bool isAdmin)
+        {
+            string createdByUserId = task.CreatedByUserId.ToString();
+            string assignedToUserId = task.AssignedToUserId.ToString();
+
+            return (createdByUserId != currentUserId && assignedToUserId != currentUserId && !isAdmin);
+        }
+
         public async Task<IQueryable<TaskItem>> GetFilteredTasks(string userId, bool isAdmin, TaskFilters filters)
         {
             var tasks = await _taskRepo.GetAllTasks();
@@ -60,15 +69,26 @@ namespace Task_managment_system.Services
             return tasks;
         }
 
-        public async Task<TaskItem?> GetTaskById(string id)
+        public async Task<TaskItem> GetTaskById(string id, string currentUserId, bool isAdmin)
         {
             var task = await _taskRepo.GetTaskById(id);
+
+            if (task is null)
+            {
+                throw new NotFoundException($"task with id:{id} not found");
+            }
+
+            if (IsNotAuthorized(task, currentUserId, isAdmin))
+            {
+                throw new ForbiddenException("user dont is not authorized");
+            }
+
             return task;
         }
 
         public async Task<TaskItem> AddTask(TaskItem task)
         {
-            _taskRepo.AddTask(task);
+            await _taskRepo.AddTask(task);
             return task;
         }
 
