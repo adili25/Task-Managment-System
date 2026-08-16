@@ -14,12 +14,7 @@ namespace Task_managment_system.Services
 
         public string? GenerateJwtToken(string UserId, string Email, Roles Role)
         {
-            if (string.IsNullOrEmpty(UserId) || string.IsNullOrEmpty(Email))
-            {
-                return null;
-            }
-
-            //building the claims for the JWT
+            //bilding the claims for the JWT
             var claim = new []
             {
                 new Claim(JwtRegisteredClaimNames.Sub, UserId),

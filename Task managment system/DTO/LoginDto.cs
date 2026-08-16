@@ -1,24 +1,14 @@
-﻿namespace Task_managment_system.DTO
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Task_managment_system.DTO
 {
     public class LoginDto
     {
+        [Required]
+        [EmailAddress]
         public string Email { set; get; }
+
+        [Required]
         public string Password { set; get; }
-
-        public LoginDto(string email, string password)
-        {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                throw new ArgumentException("Email cannot be null or empty.", nameof(email));
-            }
-
-            if (string.IsNullOrWhiteSpace(password))
-            {
-                throw new ArgumentException("Password cannot be null or empty.", nameof(password));
-            }
-
-            Email = email;
-            Password = password;
-        }
     }
 }

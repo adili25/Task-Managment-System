@@ -1,4 +1,5 @@
 ﻿using Task_Manager.Models;
+using Task_managment_system.Interfaces;
 
 /* 
  * here we define the UserRepository ot act like the database with shown methods 
@@ -6,7 +7,7 @@
 
 namespace Task_managment_system.Repositries
 {
-    public class UserRepository
+    public class UserRepository : IUserRepository
     {
         //acting as the actuall database
         private readonly List<ApplicationUser> Users;
@@ -17,19 +18,19 @@ namespace Task_managment_system.Repositries
         }
 
         //add user to the database (Users)
-        public void AddUser(ApplicationUser user)
+        public async Task AddUser(ApplicationUser user)
         {
             Users.Add(user);
         }
 
         //get all users as IEnumerable  
-        public IQueryable<ApplicationUser> GetAllUsers()
+        public async Task<IQueryable<ApplicationUser>> GetAllUsers()
         {
             return Users.AsQueryable();
         }
 
         //get user by Id
-        public ApplicationUser? GetUserById(Guid Id)
+        public async Task<ApplicationUser?> GetUserById(Guid Id)
         {
             //fetching the user from Users
             ApplicationUser? user = Users.FirstOrDefault(u => u.Id == Id);
@@ -37,7 +38,7 @@ namespace Task_managment_system.Repositries
         }
 
         //get the user by email for password validation
-        public ApplicationUser? GetUserByEmail(string email)
+        public async Task<ApplicationUser?> GetUserByEmail(string email)
         {
             //fetching the user from Users
             ApplicationUser? user = Users.FirstOrDefault(u => u.Email == email);

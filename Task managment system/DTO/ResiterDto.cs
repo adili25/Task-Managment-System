@@ -13,8 +13,10 @@ namespace Task_managment_system.DTO
         public string Email { get; set; }
 
         [Required]
+        [RegularExpression(@"^(?=(?:.*\d){2})(?=.*[!@#$%^&*])(?=.{8,})")]
         public string Password { get; set; }
 
+        [Required]
         public Roles Role { get; set; }
     }
 }

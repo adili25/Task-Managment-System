@@ -21,22 +21,10 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult RegisterNewUser([FromBody] RegisterDto registerRequest)
+        public async Task<ActionResult> RegisterNewUser([FromBody] RegisterDto registerRequest)
         {
             _logger.LogInformation("--> statring the registeration");
-
-            //the [apicontroller] automaticlly check the registerRequest, so no need for this validations
-            if(registerRequest == default)
-            {
-                _logger.LogWarning("<-- the payload is not valid");
-                return BadRequest("---the registerRequest is null---");
-            }
-
-            if (_userServices.GetUserByEmail(registerRequest.Email) != null)
-            {
-                _logger.LogWarning("<-- the registed email is already taken");
-                return BadRequest("---the registed email is already taken---");
-            }
+            await _userServices.CheckRegistedEmail(registerRequest.Email);
 
             _logger.LogInformation("--> creating new User");
             var newUser = new ApplicationUser(
@@ -47,8 +35,7 @@ namespace Task_managment_system.Controllers
             );
 
             _logger.LogInformation("--> adding the User");
-
-            _userServices.AddUser(newUser);
+            await _userServices.AddUser(newUser);
             
             return Ok(new 
             {
@@ -60,32 +47,13 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult LoginUser([FromBody] LoginDto loginRequest)
+        public async Task<ActionResult> LoginUser([FromBody] LoginDto loginRequest)
         {
             _logger.LogInformation("--> statring the login with email = {email}", loginRequest.Email);
 
-            //the [apicontroller] automaticlly check the registerRequest, so no need for this validations
-            if (loginRequest == default)
-            {
-                _logger.LogError("<-- the payload is not valid");
-                return BadRequest("---the loginRequest is null---");
-            }
+            var user = await _userServices.UserVarification(loginRequest.Email, loginRequest.Password); 
 
-            var loginUser = _userServices.GetUserByEmail(loginRequest.Email);
-
-            if (loginUser == default || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, loginUser.PasswordHash))
-            {
-                _logger.LogWarning("<-- the user unauthorized");
-                return Unauthorized("---Unauthorized User---");
-            }    
-
-            var JwtToken = _authServices.GenerateJwtToken(loginUser.Id.ToString(), loginUser.Email, loginUser.Role);
-
-            if (JwtToken == null)
-            {
-                _logger.LogWarning("<-- error while creating JWT");
-                return BadRequest("--missing information---");
-            }
+            var JwtToken = _authServices.GenerateJwtToken(user.Id.ToString(), user.Email, user.Role);
             
             return Ok(new
             {

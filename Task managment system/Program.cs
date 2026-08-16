@@ -2,14 +2,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Task_managment_system.Extentions;
+using Task_managment_system.Interfaces;
 using Task_managment_system.Repositries;
 using Task_managment_system.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
 // JWT Authentication
-// ============================================================
 
 var issuer = builder.Configuration["JwtSettings:Issuer"]
     ?? throw new InvalidOperationException(
@@ -45,7 +44,7 @@ builder.Services
                 Encoding.UTF8.GetBytes(secret))
         };
 
-        // Logs the real reason a token was rejected instead of a blank challenge.
+        //logs the real reason a token was rejected
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
@@ -77,25 +76,19 @@ builder.Services
     });
 
 
-// ============================================================
 // Authorization
-// ============================================================
-
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Admin", policy =>
     {
         policy.RequireRole("Admin");
     });
 
-
-// ============================================================
 // Dependency Injection
-// ============================================================
 
 // Singleton repositories because they hold application data
 // for the lifetime of the application.
-builder.Services.AddSingleton<UserRepository>();
-builder.Services.AddSingleton<TaskRepository>();
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<ITaskRepository, TaskRepository>();
 
 // Scoped services
 builder.Services.AddScoped<AuthServices>();
@@ -103,25 +96,13 @@ builder.Services.AddScoped<TaskServices>();
 builder.Services.AddScoped<ReportServices>();
 builder.Services.AddScoped<UserServices>();
 
-
-// ============================================================
 // Controllers
-// ============================================================
-
 builder.Services.AddControllers();
 
-
-// ============================================================
 // Swagger
-// ============================================================
-
 builder.Services.AddSwaggerWithJwt();
 
-
-// ============================================================
 // CORS
-// ============================================================
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -133,28 +114,16 @@ builder.Services.AddCors(options =>
     });
 });
 
-
-// ============================================================
 // Build application
-// ============================================================
-
 var app = builder.Build();
 
-
-// ============================================================
 // Swagger
-// ============================================================
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwaggerWithJwt();
 }
 
-
-// ============================================================
 // Middleware Pipeline
-// ============================================================
-
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
