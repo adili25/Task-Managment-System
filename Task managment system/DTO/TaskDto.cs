@@ -24,7 +24,7 @@ namespace Task_managment_system.DTO
 
 
         [Required(ErrorMessage = "The Due Date required.")]
-        public DateTime DueDate { get; set; }
+        public DateTimeOffset DueDate { get; set; }
 
 
         [Required(ErrorMessage = "The Created User ID required.")]

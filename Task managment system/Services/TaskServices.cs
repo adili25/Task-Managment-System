@@ -28,7 +28,7 @@ namespace Task_managment_system.Services
 
             if (!isAdmin)
             {
-                tasks = tasks.Where(t => t.AssignedToUserId.ToString() == userId);
+                tasks = tasks.Where(t => t.AssignedToUserId == Guid.Parse(userId));
             }
 
             if (filters.TitleOrDescription != null)
@@ -48,12 +48,12 @@ namespace Task_managment_system.Services
 
             if (!string.IsNullOrEmpty(filters.AssignedId))
             {
-                tasks = tasks.Where(t => t.AssignedToUserId.ToString() == filters.AssignedId);
+                tasks = tasks.Where(t => t.AssignedToUserId == Guid.Parse(filters.AssignedId));
             }
 
             if (!string.IsNullOrEmpty(filters.CreatorId))
             {
-                tasks = tasks.Where(t => t.CreatedByUserId.ToString() == filters.CreatorId);
+                tasks = tasks.Where(t => t.CreatedByUserId == Guid.Parse(filters.CreatorId));
             }
 
             if (filters.FromDueDate != null)
@@ -71,7 +71,7 @@ namespace Task_managment_system.Services
 
         public async Task<TaskItem> GetTaskById(string id, string currentUserId, bool isAdmin)
         {
-            var task = await _taskRepo.GetTaskById(id);
+            var task = await _taskRepo.GetTaskById(Guid.Parse(id));
 
             if (task is null)
             {
@@ -92,25 +92,46 @@ namespace Task_managment_system.Services
             return task;
         }
 
-        public async Task<bool> DeleteTask(TaskItem task)
+        public async Task DeleteTask(TaskItem task)
         {
-            if (await _taskRepo.DeleteTask(task.Id.ToString()))
-            {
-                return true;
-            }
-
-            else return false;
+            await _taskRepo.DeleteTask(task.Id);
         }
 
-        public async Task UpdateTask(TaskItem task, TaskDto updatedTask)
+        public async Task UpdateTask(TaskItem task, UpdateTaskDto updatedTask)
         {
-            task.Title = updatedTask.Title;
-            task.Description = updatedTask.Discreption;
-            task.TaskStatus = updatedTask.TaskStatus;
-            task.DueDate = updatedTask.DueDate;
-            task.AssignedToUserId = updatedTask.AssignedToUserId;
-            task.TaskPriority = updatedTask.Priority;
-            task.UpdatedAt = DateTime.UtcNow;
+            if (updatedTask.Title is not null)
+            {
+                task.Title = updatedTask.Title;
+            }
+
+            if (updatedTask.Discreption is not null)
+            {
+                task.Description = updatedTask.Discreption;
+            }
+
+            if (updatedTask.TaskStatus is not null)
+            {
+                task.TaskStatus = updatedTask.TaskStatus.Value;
+            }
+
+            if (updatedTask.DueDate is not null)
+            {
+                task.DueDate = updatedTask.DueDate.Value;
+            }
+
+            if (updatedTask.AssignedToUserId is not null)
+            {
+                task.AssignedToUserId = updatedTask.AssignedToUserId.Value;
+            }
+
+            if (updatedTask.Priority is not null)
+            {
+                task.TaskPriority = updatedTask.Priority.Value;
+            }
+
+            task.UpdatedAt = DateTimeOffset.UtcNow;
+
+            await _taskRepo.SaveChanges();
         }
     }
 }

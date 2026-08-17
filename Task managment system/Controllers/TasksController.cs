@@ -5,6 +5,7 @@ using Task_Manager.Models;
 using Task_managment_system.DTO;
 using Task_managment_system.Services;
 using Task_managment_system.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Task_managment_system.Controllers
@@ -48,11 +49,12 @@ namespace Task_managment_system.Controllers
             var listOfTasks = await _taskServices.GetFilteredTasks(currentUserId, isAdmin, filters);
             //no need for the nullity check, if no tasks return empty list;
             _logger.LogInformation("--> fetching tasks succussful");
+            var tasks = await listOfTasks.ToListAsync();
 
             return Ok(new
             {
                 message = "---fetching tasks succussful---",
-                tasks = listOfTasks.ToList()
+                tasks = tasks
             });
         }
 
@@ -89,7 +91,7 @@ namespace Task_managment_system.Controllers
                     requestTask.AssignedToUserId
                 );
 
-            var createdTask = _taskServices.AddTask(newTask);
+            var createdTask =await _taskServices.AddTask(newTask);
             _logger.LogInformation("--> creating task succussful");
 
             return CreatedAtAction(
@@ -99,8 +101,8 @@ namespace Task_managment_system.Controllers
             );    
         }
 
-        [HttpPatch("{id}")]
-        public async Task<ActionResult> UpdateTask([FromRoute] string id, [FromBody] TaskDto recievedUpdatedTask)
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateTask([FromRoute] string id, [FromBody] UpdateTaskDto recievedUpdatedTask)
         {
 
             _logger.LogInformation("--> starting updating task");
@@ -128,17 +130,9 @@ namespace Task_managment_system.Controllers
 
             var task = await _taskServices.GetTaskById(id, currentUserId, IsAdmin);
 
-            if (await _taskServices.DeleteTask(task))
-            {
-                _logger.LogInformation("--> deleting task succussful");
-                return NoContent();
-            }
-
-            else 
-            {
-                _logger.LogWarning("<-- deleting task failed");
-                return NotFound("---The Task With Given Id Not Found---");
-            }
+            await _taskServices.DeleteTask(task);
+            _logger.LogInformation("--> deleting task succussful");
+            return NoContent();
         }
     }
 }
