@@ -20,7 +20,7 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpGet("task-summary")]
-        public async Task<ActionResult> TasksReport([FromQuery] DateTime FromDate, [FromQuery] DateTime ToDate)
+        public async Task<ActionResult> TasksReport([FromQuery] DateTimeOffset FromDate, [FromQuery] DateTimeOffset ToDate)
         {
             TaskSummaryReportDto report = await _reportServices.CreateTasksReport(FromDate, ToDate);
             return Ok(new

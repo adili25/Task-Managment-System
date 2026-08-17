@@ -11,8 +11,8 @@ namespace Task_managment_system.DTO
         public Priority? Priority { get; set; } = null;
         public string? AssignedId { get; set; } = null;
         public string? CreatorId { get; set; } = null;
-        public DateTime? FromDueDate { get; set; } = null;
-        public DateTime? ToDueDate { get; set; } = null;
+        public DateTimeOffset? FromDueDate { get; set; } = null;
+        public DateTimeOffset? ToDueDate { get; set; } = null;
 
         public TaskFilters() { }
 
@@ -22,8 +22,8 @@ namespace Task_managment_system.DTO
             Priority? priority = null,
             string? assignedId = null,
             string? creatorId = null,
-            DateTime? fromDueDate = null,
-            DateTime? toDueDate = null)
+            DateTimeOffset? fromDueDate = null,
+            DateTimeOffset? toDueDate = null)
         {
             TitleOrDescription = titleOrDescription;
             Status = status;

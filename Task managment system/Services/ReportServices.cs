@@ -49,7 +49,7 @@ namespace Task_managment_system.Services
 
         private int NumOfUncompletedTasks(IQueryable<TaskItem> tasks)
         {
-            return tasks.Count(t => t.DueDate < DateTime.UtcNow && t.TaskStatus != Status.Completed);
+            return tasks.Count(t => t.DueDate < DateTimeOffset.UtcNow && t.TaskStatus != Status.Completed);
         }
 
         private Dictionary<string, int> GetTaskCountPerUser(IQueryable<TaskItem> tasks, IQueryable<ApplicationUser> users)
@@ -77,7 +77,7 @@ namespace Task_managment_system.Services
             return tasks.Count(t => t.TaskStatus != Status.Completed && (t.TaskPriority == Priority.High || t.TaskPriority == Priority.Critical));
         }
 
-        private double PercentageIncompletedTasks(DateTime FromDate, DateTime ToDate, IQueryable<TaskItem> tasks)
+        private double PercentageIncompletedTasks(DateTimeOffset FromDate, DateTimeOffset ToDate, IQueryable<TaskItem> tasks)
         {
             var taskInRange = tasks.Where(t => t.CreatedAt >= FromDate && t.DueDate <= ToDate).ToList();
             double persentage = 0;
@@ -92,7 +92,7 @@ namespace Task_managment_system.Services
             return persentage;
         }
 
-        public async Task<TaskSummaryReportDto> CreateTasksReport(DateTime FromDate, DateTime ToDate)
+        public async Task<TaskSummaryReportDto> CreateTasksReport(DateTimeOffset FromDate, DateTimeOffset ToDate)
         {
             if (FromDate < ToDate)
             {

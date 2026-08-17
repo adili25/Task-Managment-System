@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Task_managment_system.Extentions;
 using Task_managment_system.Interfaces;
 using Task_managment_system.Repositries;
 using Task_managment_system.Services;
+using Task_managment_system.Database;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +24,10 @@ var audience = builder.Configuration["JwtSettings:Audience"]
 var secret = builder.Configuration["JwtSettings:Secret"]
     ?? throw new InvalidOperationException(
         "Missing JwtSettings:Secret in configuration.");
+
+var connectinoString = builder.Configuration["DbConnectionString"]
+    ?? throw new InvalidOperationException(
+        "missing User secrets: DbConnectionsString in configurations ");
 
 builder.Services
     .AddAuthentication(options =>
@@ -87,8 +94,12 @@ builder.Services.AddAuthorizationBuilder()
 
 // Singleton repositories because they hold application data
 // for the lifetime of the application.
-builder.Services.AddSingleton<IUserRepository, UserRepository>();
-builder.Services.AddSingleton<ITaskRepository, TaskRepository>();
+
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectinoString));
+
+//---> here DbContext will crash if AddSingleton
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 
 // Scoped services
 builder.Services.AddScoped<AuthServices>();

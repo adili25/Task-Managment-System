@@ -1,5 +1,9 @@
 ﻿using Task_Manager.Models;
 using Task_managment_system.Interfaces;
+using Task_managment_system.Database;
+using Task_managment_system.Exceptions;
+using Microsoft.AspNetCore.Http.HttpResults;
+
 
 /* 
  * here we define the TaskRepository ot act like the database with shown methods 
@@ -10,47 +14,49 @@ namespace Task_managment_system.Repositries
     public class TaskRepository : ITaskRepository
     {
         //acting as the actuall database
-        private readonly List<TaskItem> Tasks = [];
+        private readonly AppDbContext _context;
+
+        public TaskRepository(AppDbContext context)
+        {
+            _context = context;
+        }
 
         //add task to the database (Tasks)
-        public async Task<bool> AddTask(TaskItem task)
+        public async Task AddTask(TaskItem task)
         {
-            //check null task
-            if (task == default)
-            {
-                return false;
-            }
-
-            //if its not null add it to the database
-            Tasks.Add(task);
-            return true;
+            _context.Tasks.Add(task);
+            await _context.SaveChangesAsync();
         }
 
         //get all the Tasks as IEnumerable
         public async Task<IQueryable<TaskItem>> GetAllTasks()
         {
-            return Tasks.AsQueryable();
+            return _context.Tasks;
         }
 
         //get Task by Id
-        public async Task<TaskItem?> GetTaskById(string id)
+        public async Task<TaskItem?> GetTaskById(Guid id)
         {
             //fetching the user from Users
-            TaskItem? task = Tasks.FirstOrDefault(t => t.Id.ToString() == id);
+            var task =await _context.Tasks.FindAsync(id);
             return task;
         }
 
-        public async Task<bool> DeleteTask(string id)
+        public async Task DeleteTask(Guid id)
         {
-            var task = Tasks.FirstOrDefault(t => t.Id.ToString() == id);
-            
-            if (task == default)
+            var task = await _context.Tasks.FindAsync(id);
+            if (task is null)
             {
-                return false;
+                throw new NotFoundException($"the user id: {id} not found for delete");
             }
 
-            Tasks.Remove(task);
-            return true;
+            _context.Tasks.Remove(task);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task SaveChanges()
+        {
+            await _context.SaveChangesAsync();
         }
 
     }
