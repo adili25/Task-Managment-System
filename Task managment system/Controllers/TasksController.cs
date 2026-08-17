@@ -101,8 +101,8 @@ namespace Task_managment_system.Controllers
             );    
         }
 
-        [HttpPatch("{id}")]
-        public async Task<ActionResult> UpdateTask([FromRoute] string id, [FromBody] TaskDto recievedUpdatedTask)
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateTask([FromRoute] string id, [FromBody] UpdateTaskDto recievedUpdatedTask)
         {
 
             _logger.LogInformation("--> starting updating task");

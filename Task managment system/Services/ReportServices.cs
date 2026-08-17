@@ -4,6 +4,7 @@ using Task_managment_system.DTO;
 using Task_managment_system.Enums;
 using Task_managment_system.Interfaces;
 using Task_managment_system.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Task_managment_system.Services
 {
@@ -18,74 +19,61 @@ namespace Task_managment_system.Services
             _userRepo = userRepo;
         }
 
-        private Dictionary<string, int> TasksByStauts(IQueryable<TaskItem> tasks)
+        private async Task<Dictionary<string, int>> TasksByStauts(IQueryable<TaskItem> tasks)
         {
-            var StatusGroupedTasks = tasks.GroupBy(t => t.TaskStatus);
-
-            //first element in the report => Dictionary<Status, taskCount>
-            Dictionary<string, int> tasksByStatus = new Dictionary<string, int>();
-            foreach (var group in StatusGroupedTasks)
-            {
-                tasksByStatus[group.Key.ToString()] = group.Count();
-            }
-
-            /*
-    --> this is alternative solution to handel all the group and select in the sql server
-
-    Dictionary<string, int> tasksByStatus = _taskRepo.GetAllTasks()
-    .GroupBy(t => t.TaskStatus)
-    .Select(g => new { 
-        Status = g.Key, 
-        TaskCount = g.Count() 
-    })
-    .ToDictionary(
-        result => result.Status.ToString(), 
-        result => result.TaskCount
-    );  
-            */
+            Dictionary<string, int> tasksByStatus = await tasks
+                .GroupBy(t => t.TaskStatus)
+                .Select(g => new { 
+                    Status = g.Key,
+                    TaskCount = g.Count() 
+                })
+                .ToDictionaryAsync(
+                result => result.Status.ToString(),
+                result => result.TaskCount
+                );  
 
             return tasksByStatus;
         }
 
-        private int NumOfUncompletedTasks(IQueryable<TaskItem> tasks)
+        private async Task<int> NumOfUncompletedTasks(IQueryable<TaskItem> tasks)
         {
-            return tasks.Count(t => t.DueDate < DateTimeOffset.UtcNow && t.TaskStatus != Status.Completed);
+            return await tasks.CountAsync(t => t.DueDate < DateTimeOffset.UtcNow && t.TaskStatus != Status.Completed);
         }
 
-        private Dictionary<string, int> GetTaskCountPerUser(IQueryable<TaskItem> tasks, IQueryable<ApplicationUser> users)
+        private async Task<Dictionary<string, int>> GetTaskCountPerUser(IQueryable<TaskItem> tasks, IQueryable<ApplicationUser> users)
         {
-            return tasks
+            return await tasks
                 .Join(
                 users,
-                task => task.AssignedToUserId.ToString(),
-                user => user.Id.ToString(),
-
+                task => task.AssignedToUserId,
+                user => user.Id,
                 (task, user) => new
                 {
                     TaskId = task.Id,
                     UserFullName = user.FullName
                 })
                 .GroupBy(joined => joined.UserFullName)
-                .ToDictionary(
-                group => group.Key,
-                group => group.Count()
+                .Select(g => new { Name = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(
+                group => group.Name,
+                group => group.Count
                 );
         }
 
-        private int GetHighPriorityUncompletedTasks(IQueryable<TaskItem> tasks)
+        private async Task<int> GetHighPriorityUncompletedTasks(IQueryable<TaskItem> tasks)
         {
-            return tasks.Count(t => t.TaskStatus != Status.Completed && (t.TaskPriority == Priority.High || t.TaskPriority == Priority.Critical));
+            return await tasks.CountAsync(t => t.TaskStatus != Status.Completed && (t.TaskPriority == Priority.High || t.TaskPriority == Priority.Critical));
         }
 
-        private double PercentageIncompletedTasks(DateTimeOffset FromDate, DateTimeOffset ToDate, IQueryable<TaskItem> tasks)
+        private async Task<double> PercentageIncompletedTasks(DateTimeOffset FromDate, DateTimeOffset ToDate, IQueryable<TaskItem> tasks)
         {
-            var taskInRange = tasks.Where(t => t.CreatedAt >= FromDate && t.DueDate <= ToDate).ToList();
+            var taskInRange = tasks.Where(t => t.CreatedAt >= FromDate && t.DueDate <= ToDate);
             double persentage = 0;
-            int totalTasks = taskInRange.Count();
+            int totalTasks = await taskInRange.CountAsync();
 
             if (totalTasks > 0)
             {
-                int completedTasks = taskInRange.Count(t => t.TaskStatus == Status.Completed);
+                int completedTasks = await taskInRange.CountAsync(t => t.TaskStatus == Status.Completed);
                 persentage = (double)completedTasks / totalTasks * 100;
             }
 
@@ -94,7 +82,7 @@ namespace Task_managment_system.Services
 
         public async Task<TaskSummaryReportDto> CreateTasksReport(DateTimeOffset FromDate, DateTimeOffset ToDate)
         {
-            if (FromDate < ToDate)
+            if (FromDate > ToDate)
             {
                 throw new ValidationException("The FromDate is after ToDate");
             }
@@ -103,19 +91,19 @@ namespace Task_managment_system.Services
             IQueryable<ApplicationUser> users = await _userRepo.GetAllUsers();
 
             //first element => group tasks by status
-            var tasksByStatus = TasksByStauts(tasks);
+            var tasksByStatus = await TasksByStauts(tasks);
 
             //second element in the report => number of unfinished overdue tasks
-            var numberOfOverDueTasks = NumOfUncompletedTasks(tasks);
+            var numberOfOverDueTasks = await NumOfUncompletedTasks(tasks);
 
             //third element in the report => sperate the users into groups based on the assignedToUserId
-            var tasksPerUser = GetTaskCountPerUser(tasks, users);
+            var tasksPerUser = await GetTaskCountPerUser(tasks, users);
 
             //fourth element in the report => high priority incomplete tasks
-            int highPriorityIncompleteCount = GetHighPriorityUncompletedTasks(tasks);
+            int highPriorityIncompleteCount = await GetHighPriorityUncompletedTasks(tasks);
 
             //fifth elemet in the report => Persentage of incompleted tasks from date to date
-            var percentage = PercentageIncompletedTasks(FromDate, ToDate, tasks);
+            var percentage = await PercentageIncompletedTasks(FromDate, ToDate, tasks);
 
 
             TaskSummaryReportDto report = new(tasksByStatus, numberOfOverDueTasks, tasksPerUser, highPriorityIncompleteCount, Math.Round(percentage, 2));

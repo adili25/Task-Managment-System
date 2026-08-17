@@ -36,7 +36,7 @@ namespace Task_managment_system.Services
 
         public async Task CheckRegistedEmail(string email)
         {
-            var user = _userRepo.GetUserByEmail(email);
+            var user = await _userRepo.GetUserByEmail(email);
 
             if (user is not null)
             {

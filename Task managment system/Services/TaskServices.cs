@@ -97,14 +97,38 @@ namespace Task_managment_system.Services
             await _taskRepo.DeleteTask(task.Id);
         }
 
-        public async Task UpdateTask(TaskItem task, TaskDto updatedTask)
+        public async Task UpdateTask(TaskItem task, UpdateTaskDto updatedTask)
         {
-            task.Title = updatedTask.Title;
-            task.Description = updatedTask.Discreption;
-            task.TaskStatus = updatedTask.TaskStatus;
-            task.DueDate = updatedTask.DueDate;
-            task.AssignedToUserId = updatedTask.AssignedToUserId;
-            task.TaskPriority = updatedTask.Priority;
+            if (updatedTask.Title is not null)
+            {
+                task.Title = updatedTask.Title;
+            }
+
+            if (updatedTask.Discreption is not null)
+            {
+                task.Description = updatedTask.Discreption;
+            }
+
+            if (updatedTask.TaskStatus is not null)
+            {
+                task.TaskStatus = updatedTask.TaskStatus.Value;
+            }
+
+            if (updatedTask.DueDate is not null)
+            {
+                task.DueDate = updatedTask.DueDate.Value;
+            }
+
+            if (updatedTask.AssignedToUserId is not null)
+            {
+                task.AssignedToUserId = updatedTask.AssignedToUserId.Value;
+            }
+
+            if (updatedTask.Priority is not null)
+            {
+                task.TaskPriority = updatedTask.Priority.Value;
+            }
+
             task.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _taskRepo.SaveChanges();
