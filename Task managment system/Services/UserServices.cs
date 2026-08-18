@@ -15,28 +15,28 @@ namespace Task_managment_system.Services
             _userRepo = userRepo;
         }
 
-        public async Task AddUser(ApplicationUser user)
+        public async Task AddUser(ApplicationUser user, CancellationToken cancellationToken)
         {
-            await _userRepo.AddUser(user);
+            await _userRepo.AddUser(user, cancellationToken);
         }
 
         public async Task<IQueryable<ApplicationUser>> GetAllUsers()
         {
             return await _userRepo.GetAllUsers();
         }
-        public async Task<ApplicationUser?> GetUserById(Guid id)
+        public async Task<ApplicationUser?> GetUserById(Guid id, CancellationToken cancellationToken)
         {
-            return await _userRepo.GetUserById(id);
+            return await _userRepo.GetUserById(id, cancellationToken);
         }
 
-        public async Task<ApplicationUser?> GetUserByEmail(string email)
+        public async Task<ApplicationUser?> GetUserByEmail(string email, CancellationToken cancellationToken)
         {
-            return await _userRepo.GetUserByEmail(email);
+            return await _userRepo.GetUserByEmail(email, cancellationToken);
         }
 
-        public async Task CheckRegistedEmail(string email)
+        public async Task CheckRegistedEmail(string email, CancellationToken cancellationToken)
         {
-            var user = await _userRepo.GetUserByEmail(email);
+            var user = await _userRepo.GetUserByEmail(email, cancellationToken);
 
             if (user is not null)
             {
@@ -46,9 +46,9 @@ namespace Task_managment_system.Services
             return;
         }
 
-        public async Task<ApplicationUser> UserVarification(string email, string password)
+        public async Task<ApplicationUser> UserVarification(string email, string password, CancellationToken cancellationToken)
         {
-            var loginUser = await _userRepo.GetUserByEmail(email);
+            var loginUser = await _userRepo.GetUserByEmail(email, cancellationToken);
 
             if (loginUser is null)
             {

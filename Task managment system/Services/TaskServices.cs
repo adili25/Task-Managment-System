@@ -69,9 +69,9 @@ namespace Task_managment_system.Services
             return tasks;
         }
 
-        public async Task<TaskItem> GetTaskById(string id, string currentUserId, bool isAdmin)
+        public async Task<TaskItem> GetTaskById(string id, string currentUserId, bool isAdmin, CancellationToken cancellationToken)
         {
-            var task = await _taskRepo.GetTaskById(Guid.Parse(id));
+            var task = await _taskRepo.GetTaskById(Guid.Parse(id), cancellationToken);
 
             if (task is null)
             {
@@ -86,18 +86,18 @@ namespace Task_managment_system.Services
             return task;
         }
 
-        public async Task<TaskItem> AddTask(TaskItem task)
+        public async Task<TaskItem> AddTask(TaskItem task, CancellationToken cancellationToken)
         {
-            await _taskRepo.AddTask(task);
+            await _taskRepo.AddTask(task, cancellationToken);
             return task;
         }
 
-        public async Task DeleteTask(TaskItem task)
+        public async Task DeleteTask(TaskItem task, CancellationToken cancellationToken)
         {
-            await _taskRepo.DeleteTask(task.Id);
+            await _taskRepo.DeleteTask(task.Id, cancellationToken);
         }
 
-        public async Task UpdateTask(TaskItem task, UpdateTaskDto updatedTask)
+        public async Task UpdateTask(TaskItem task, UpdateTaskDto updatedTask, CancellationToken cancellationToken)
         {
             if (updatedTask.Title is not null)
             {
@@ -131,7 +131,7 @@ namespace Task_managment_system.Services
 
             task.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _taskRepo.SaveChanges();
+            await _taskRepo.SaveChanges(cancellationToken);
         }
     }
 }

@@ -20,9 +20,9 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpGet("task-summary")]
-        public async Task<ActionResult> TasksReport([FromQuery] DateTimeOffset FromDate, [FromQuery] DateTimeOffset ToDate)
+        public async Task<ActionResult> TasksReport([FromQuery] DateTimeOffset FromDate, [FromQuery] DateTimeOffset ToDate, CancellationToken cancellationToken)
         { 
-            TaskSummaryReportDto report = await _reportServices.CreateTasksReport(FromDate.ToUniversalTime(), ToDate.ToUniversalTime());
+            TaskSummaryReportDto report = await _reportServices.CreateTasksReport(FromDate.ToUniversalTime(), ToDate.ToUniversalTime(), cancellationToken);
             return Ok(new
             {
                 message = "Tasks Report Successfully",

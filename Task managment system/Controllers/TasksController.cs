@@ -39,7 +39,7 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<TaskItem>>> GetTasks([FromQuery] TaskFilters filters)
+        public async Task<ActionResult<List<TaskItem>>> GetTasks([FromQuery] TaskFilters filters, CancellationToken cancellationToken)
         {
             _logger.LogInformation("--> starting getting Tasks");
 
@@ -49,7 +49,7 @@ namespace Task_managment_system.Controllers
             var listOfTasks = await _taskServices.GetFilteredTasks(currentUserId, isAdmin, filters);
             //no need for the nullity check, if no tasks return empty list;
             _logger.LogInformation("--> fetching tasks succussful");
-            var tasks = await listOfTasks.ToListAsync();
+            var tasks = await listOfTasks.ToListAsync(cancellationToken);
 
             return Ok(new
             {
@@ -59,12 +59,12 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TaskItem>> GetTaskById([FromRoute] string id)
+        public async Task<ActionResult<TaskItem>> GetTaskById([FromRoute] string id, CancellationToken cancellationToken)
         {
             _logger.LogInformation("--> starting getting task with id");
             var (currentUserId, isAdmin) = GetUserIdIsAdmin();
 
-            var task = await _taskServices.GetTaskById(id, currentUserId, isAdmin);
+            var task = await _taskServices.GetTaskById(id, currentUserId, isAdmin, cancellationToken);
 
             _logger.LogInformation("--> fetching task succussful");
 
@@ -76,7 +76,7 @@ namespace Task_managment_system.Controllers
         }
         
         [HttpPost]
-        public async Task<ActionResult> CreateTask([FromBody] TaskDto requestTask)
+        public async Task<ActionResult> CreateTask([FromBody] TaskDto requestTask, CancellationToken cancellationToken)
         {
             _logger.LogInformation("--> starting creating task");
 
@@ -91,7 +91,7 @@ namespace Task_managment_system.Controllers
                     requestTask.AssignedToUserId
                 );
 
-            var createdTask =await _taskServices.AddTask(newTask);
+            var createdTask =await _taskServices.AddTask(newTask, cancellationToken);
             _logger.LogInformation("--> creating task succussful");
 
             return CreatedAtAction(
@@ -102,16 +102,16 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateTask([FromRoute] string id, [FromBody] UpdateTaskDto recievedUpdatedTask)
+        public async Task<ActionResult> UpdateTask([FromRoute] string id, [FromBody] UpdateTaskDto recievedUpdatedTask, CancellationToken cancellationToken)
         {
 
             _logger.LogInformation("--> starting updating task");
             var (currentUserId, isAdmin) = GetUserIdIsAdmin();
 
-            var task = await _taskServices.GetTaskById(id, currentUserId, isAdmin);
+            var task = await _taskServices.GetTaskById(id, currentUserId, isAdmin, cancellationToken);
 
             _logger.LogInformation("--> updating the tasks");
-            await _taskServices.UpdateTask(task, recievedUpdatedTask);
+            await _taskServices.UpdateTask(task, recievedUpdatedTask, cancellationToken);
 
             _logger.LogInformation("--> updating task succussful");
 
@@ -123,14 +123,14 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteTask([FromRoute] string id)
+        public async Task<ActionResult> DeleteTask([FromRoute] string id, CancellationToken cancellationToken)
         {
             _logger.LogInformation("--> starting deleting task");
             var (currentUserId, IsAdmin) = GetUserIdIsAdmin();
 
-            var task = await _taskServices.GetTaskById(id, currentUserId, IsAdmin);
+            var task = await _taskServices.GetTaskById(id, currentUserId, IsAdmin, cancellationToken);
 
-            await _taskServices.DeleteTask(task);
+            await _taskServices.DeleteTask(task, cancellationToken);
             _logger.LogInformation("--> deleting task succussful");
             return NoContent();
         }

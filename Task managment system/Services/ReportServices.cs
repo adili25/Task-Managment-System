@@ -18,7 +18,7 @@ namespace Task_managment_system.Services
             _userRepo = userRepo;
         }
 
-        private async Task<Dictionary<string, int>> TasksByStauts(IQueryable<TaskItem> tasks)
+        private async Task<Dictionary<string, int>> TasksByStauts(IQueryable<TaskItem> tasks, CancellationToken cancellationToken)
         {
             Dictionary<string, int> tasksByStatus = await tasks
                 .GroupBy(t => t.TaskStatus)
@@ -28,18 +28,19 @@ namespace Task_managment_system.Services
                 })
                 .ToDictionaryAsync(
                 result => result.Status.ToString(),
-                result => result.TaskCount
+                result => result.TaskCount,
+                cancellationToken
                 );  
 
             return tasksByStatus;
         }
 
-        private async Task<int> NumOfUncompletedTasks(IQueryable<TaskItem> tasks)
+        private async Task<int> NumOfUncompletedTasks(IQueryable<TaskItem> tasks, CancellationToken cancellationToken)
         {
-            return await tasks.CountAsync(t => t.DueDate < DateTimeOffset.UtcNow && t.TaskStatus != Status.Completed);
+            return await tasks.CountAsync(t => t.DueDate < DateTimeOffset.UtcNow && t.TaskStatus != Status.Completed, cancellationToken);
         }
 
-        private async Task<Dictionary<string, int>> GetTaskCountPerUser(IQueryable<TaskItem> tasks, IQueryable<ApplicationUser> users)
+        private async Task<Dictionary<string, int>> GetTaskCountPerUser(IQueryable<TaskItem> tasks, IQueryable<ApplicationUser> users, CancellationToken cancellationToken)
         {
             return await tasks
                 .Join(
@@ -55,31 +56,32 @@ namespace Task_managment_system.Services
                 .Select(g => new { Name = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(
                 group => group.Name,
-                group => group.Count
+                group => group.Count,
+                cancellationToken
                 );
         }
 
-        private async Task<int> GetHighPriorityUncompletedTasks(IQueryable<TaskItem> tasks)
+        private async Task<int> GetHighPriorityUncompletedTasks(IQueryable<TaskItem> tasks, CancellationToken cancellationToken)
         {
-            return await tasks.CountAsync(t => t.TaskStatus != Status.Completed && (t.TaskPriority == Priority.High || t.TaskPriority == Priority.Critical));
+            return await tasks.CountAsync(t => t.TaskStatus != Status.Completed && (t.TaskPriority == Priority.High || t.TaskPriority == Priority.Critical), cancellationToken);
         }
 
-        private async Task<double> PercentageIncompletedTasks(DateTimeOffset FromDate, DateTimeOffset ToDate, IQueryable<TaskItem> tasks)
+        private async Task<double> PercentageIncompletedTasks(DateTimeOffset FromDate, DateTimeOffset ToDate, IQueryable<TaskItem> tasks, CancellationToken cancellationToken)
         {
             var taskInRange = tasks.Where(t => t.CreatedAt >= FromDate && t.DueDate <= ToDate);
             double persentage = 0;
-            int totalTasks = await taskInRange.CountAsync();
+            int totalTasks = await taskInRange.CountAsync(cancellationToken);
 
             if (totalTasks > 0)
             {
-                int completedTasks = await taskInRange.CountAsync(t => t.TaskStatus == Status.Completed);
+                int completedTasks = await taskInRange.CountAsync(t => t.TaskStatus == Status.Completed, cancellationToken);
                 persentage = (double)completedTasks / totalTasks * 100;
             }
 
             return persentage;
         }
 
-        public async Task<TaskSummaryReportDto> CreateTasksReport(DateTimeOffset FromDate, DateTimeOffset ToDate)
+        public async Task<TaskSummaryReportDto> CreateTasksReport(DateTimeOffset FromDate, DateTimeOffset ToDate, CancellationToken cancellationToken)
         {
             if (FromDate > ToDate)
             {
@@ -90,19 +92,19 @@ namespace Task_managment_system.Services
             IQueryable<ApplicationUser> users = await _userRepo.GetAllUsers();
 
             //first element => group tasks by status
-            var tasksByStatus = await TasksByStauts(tasks);
+            var tasksByStatus = await TasksByStauts(tasks, cancellationToken);
 
             //second element in the report => number of unfinished overdue tasks
-            var numberOfOverDueTasks = await NumOfUncompletedTasks(tasks);
+            var numberOfOverDueTasks = await NumOfUncompletedTasks(tasks, cancellationToken);
 
             //third element in the report => sperate the users into groups based on the assignedToUserId
-            var tasksPerUser = await GetTaskCountPerUser(tasks, users);
+            var tasksPerUser = await GetTaskCountPerUser(tasks, users, cancellationToken);
 
             //fourth element in the report => high priority incomplete tasks
-            int highPriorityIncompleteCount = await GetHighPriorityUncompletedTasks(tasks);
+            int highPriorityIncompleteCount = await GetHighPriorityUncompletedTasks(tasks, cancellationToken);
 
             //fifth elemet in the report => Persentage of incompleted tasks from date to date
-            var percentage = await PercentageIncompletedTasks(FromDate, ToDate, tasks);
+            var percentage = await PercentageIncompletedTasks(FromDate, ToDate, tasks, cancellationToken);
 
 
             TaskSummaryReportDto report = new(tasksByStatus, numberOfOverDueTasks, tasksPerUser, highPriorityIncompleteCount, Math.Round(percentage, 2));
