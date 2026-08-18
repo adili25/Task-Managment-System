@@ -22,10 +22,10 @@ namespace Task_managment_system.Repositries
         }
 
         //add task to the database (Tasks)
-        public async Task AddTask(TaskItem task)
+        public async Task AddTask(TaskItem task, CancellationToken cancellationToken)
         {
             _context.Tasks.Add(task);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         //get all the Tasks as IEnumerable
@@ -35,28 +35,28 @@ namespace Task_managment_system.Repositries
         }
 
         //get Task by Id
-        public async Task<TaskItem?> GetTaskById(Guid id)
+        public async Task<TaskItem?> GetTaskById(Guid id, CancellationToken cancellationToken)
         {
             //fetching the user from Users
-            var task =await _context.Tasks.FindAsync(id);
+            var task =await _context.Tasks.FindAsync(new object?[] { id }, cancellationToken);
             return task;
         }
 
-        public async Task DeleteTask(Guid id)
+        public async Task DeleteTask(Guid id, CancellationToken cancellationToken)
         {
-            var task = await _context.Tasks.FindAsync(id);
+            var task = await _context.Tasks.FindAsync(new object?[] { id }, cancellationToken);
             if (task is null)
             {
                 throw new NotFoundException($"the user id: {id} not found for delete");
             }
 
             _context.Tasks.Remove(task);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task SaveChanges()
+        public async Task SaveChanges(CancellationToken cancellationToken)
         {
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
     }

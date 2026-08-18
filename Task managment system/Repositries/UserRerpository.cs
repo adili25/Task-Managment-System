@@ -14,10 +14,10 @@ namespace Task_managment_system.Repositries
             _context = context;
         }
 
-        public async Task AddUser(ApplicationUser newUser)
+        public async Task AddUser(ApplicationUser newUser, CancellationToken cancellationToken)
         {
             _context.Users.Add(newUser);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         //get all users as IEnumerable  
@@ -28,16 +28,16 @@ namespace Task_managment_system.Repositries
         }
 
         //get user by Id
-        public async Task<ApplicationUser?> GetUserById(Guid Id)
+        public async Task<ApplicationUser?> GetUserById(Guid Id, CancellationToken cancellationToken)
         {
-            var user = await _context.Users.FindAsync(new object[] { Id });
+            var user = await _context.Users.FindAsync(new object?[] { Id }, cancellationToken);
             return user;
         }
 
         //get the user by email for password validation
-        public async Task<ApplicationUser?> GetUserByEmail(string email)
+        public async Task<ApplicationUser?> GetUserByEmail(string email, CancellationToken cancellationToken)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
             return user;
         }
     }

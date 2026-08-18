@@ -21,10 +21,10 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult> RegisterNewUser([FromBody] RegisterDto registerRequest)
+        public async Task<ActionResult> RegisterNewUser([FromBody] RegisterDto registerRequest, CancellationToken cancellationToken)
         {
             _logger.LogInformation("--> statring the registeration");
-            await _userServices.CheckRegistedEmail(registerRequest.Email);
+            await _userServices.CheckRegistedEmail(registerRequest.Email, cancellationToken);
 
             _logger.LogInformation("--> creating new User");
             var newUser = new ApplicationUser(
@@ -35,7 +35,7 @@ namespace Task_managment_system.Controllers
             );
 
             _logger.LogInformation("--> adding the User");
-            await _userServices.AddUser(newUser);
+            await _userServices.AddUser(newUser, cancellationToken);
             
             return Ok(new 
             {
@@ -47,11 +47,11 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult> LoginUser([FromBody] LoginDto loginRequest)
+        public async Task<ActionResult> LoginUser([FromBody] LoginDto loginRequest, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("--> statring the login with email = {email}", loginRequest.Email);
+            _logger.LogInformation($"--> statring the login with email = {loginRequest.Email}");
 
-            var user = await _userServices.UserVarification(loginRequest.Email, loginRequest.Password); 
+            var user = await _userServices.UserVarification(loginRequest.Email, loginRequest.Password, cancellationToken); 
 
             var JwtToken = _authServices.GenerateJwtToken(user.Id.ToString(), user.Email, user.Role);
             

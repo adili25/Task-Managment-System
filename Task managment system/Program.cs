@@ -2,11 +2,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Task_managment_system.Database;
 using Task_managment_system.Extentions;
 using Task_managment_system.Interfaces;
+using Task_managment_system.Middlewares;
 using Task_managment_system.Repositries;
 using Task_managment_system.Services;
-using Task_managment_system.Database;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -125,6 +126,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 // Build application
 var app = builder.Build();
 
@@ -139,6 +143,9 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+app.UseExceptionHandler();
+
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
