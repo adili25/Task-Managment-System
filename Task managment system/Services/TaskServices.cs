@@ -14,21 +14,18 @@ namespace Task_managment_system.Services
             _taskRepo = taskRepo;
         }
 
-        private bool IsNotAuthorized(TaskItem task, string currentUserId, bool isAdmin)
+        private bool IsNotAuthorized(TaskItem task, Guid currentUserId, bool isAdmin)
         {
-            string createdByUserId = task.CreatedByUserId.ToString();
-            string assignedToUserId = task.AssignedToUserId.ToString();
-
-            return (createdByUserId != currentUserId && assignedToUserId != currentUserId && !isAdmin);
+            return (task.CreatedByUserId != currentUserId && task.AssignedToUserId != currentUserId && !isAdmin);
         }
 
-        public async Task<IQueryable<TaskItem>> GetFilteredTasks(string userId, bool isAdmin, TaskFilters filters)
+        public async Task<IQueryable<TaskItem>> GetFilteredTasks(Guid userId, bool isAdmin, TaskFilters filters)
         {
             var tasks = await _taskRepo.GetAllTasks();
 
             if (!isAdmin)
             {
-                tasks = tasks.Where(t => t.AssignedToUserId == Guid.Parse(userId));
+                tasks = tasks.Where(t => t.AssignedToUserId == userId);
             }
 
             if (filters.TitleOrDescription != null)
@@ -46,14 +43,14 @@ namespace Task_managment_system.Services
                 tasks = tasks.Where(t => t.TaskPriority == filters.Priority);
             }
 
-            if (!string.IsNullOrEmpty(filters.AssignedId))
+            if (filters.AssignedId != null)
             {
-                tasks = tasks.Where(t => t.AssignedToUserId == Guid.Parse(filters.AssignedId));
+                tasks = tasks.Where(t => t.AssignedToUserId == filters.AssignedId);
             }
 
-            if (!string.IsNullOrEmpty(filters.CreatorId))
+            if (filters.CreatorId != null)
             {
-                tasks = tasks.Where(t => t.CreatedByUserId == Guid.Parse(filters.CreatorId));
+                tasks = tasks.Where(t => t.CreatedByUserId == filters.CreatorId);
             }
 
             if (filters.FromDueDate != null)
@@ -69,9 +66,9 @@ namespace Task_managment_system.Services
             return tasks;
         }
 
-        public async Task<TaskItem> GetTaskById(string id, string currentUserId, bool isAdmin, CancellationToken cancellationToken)
+        public async Task<TaskItem> GetTaskById(Guid id, Guid currentUserId, bool isAdmin, CancellationToken cancellationToken)
         {
-            var task = await _taskRepo.GetTaskById(Guid.Parse(id), cancellationToken);
+            var task = await _taskRepo.GetTaskById(id, cancellationToken);
 
             if (task is null)
             {

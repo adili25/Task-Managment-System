@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Task_Manager.Models;
 using System.Reflection;
+using Task_managment_system.Models;
 
 namespace Task_managment_system.Database
 {
@@ -8,7 +9,7 @@ namespace Task_managment_system.Database
     {
         public DbSet<TaskItem> Tasks { get; set; } = null!;
         public DbSet<ApplicationUser> Users { get; set; } = null!;
-
+        public DbSet<RefreshToken> Refresh_token { get; set; } = null!;
         public AppDbContext(DbContextOptions<AppDbContext> builder) : base(builder) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

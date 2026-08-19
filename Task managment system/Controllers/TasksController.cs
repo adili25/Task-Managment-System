@@ -19,12 +19,12 @@ namespace Task_managment_system.Controllers
         private readonly ILogger<TaskController> _logger;
         
         //helper method to fetch the UserId from Claims, and isAdmin 
-        private (string currentUserId, bool isAdmin) GetUserIdIsAdmin()
+        private (Guid currentUserId, bool isAdmin) GetUserIdIsAdmin()
         {
-            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var strCurrentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var isAdmin = User.IsInRole("Admin");
 
-            if (currentUserId == null)
+            if (strCurrentUserId == null || Guid.TryParse(strCurrentUserId, out Guid currentUserId))
             {
                 throw new UnauthorizedException("the user is not authorized");
             }
@@ -59,7 +59,7 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TaskItem>> GetTaskById([FromRoute] string id, CancellationToken cancellationToken)
+        public async Task<ActionResult<TaskItem>> GetTaskById([FromRoute] Guid id, CancellationToken cancellationToken)
         {
             _logger.LogInformation("--> starting getting task with id");
             var (currentUserId, isAdmin) = GetUserIdIsAdmin();
@@ -87,7 +87,7 @@ namespace Task_managment_system.Controllers
                     requestTask.Discreption,
                     requestTask.Priority,
                     requestTask.DueDate,
-                    Guid.Parse(currentUserId),
+                    currentUserId,
                     requestTask.AssignedToUserId
                 );
 
@@ -102,7 +102,7 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateTask([FromRoute] string id, [FromBody] UpdateTaskDto recievedUpdatedTask, CancellationToken cancellationToken)
+        public async Task<ActionResult> UpdateTask([FromRoute] Guid id, [FromBody] UpdateTaskDto recievedUpdatedTask, CancellationToken cancellationToken)
         {
 
             _logger.LogInformation("--> starting updating task");
@@ -123,7 +123,7 @@ namespace Task_managment_system.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteTask([FromRoute] string id, CancellationToken cancellationToken)
+        public async Task<ActionResult> DeleteTask([FromRoute] Guid id, CancellationToken cancellationToken)
         {
             _logger.LogInformation("--> starting deleting task");
             var (currentUserId, IsAdmin) = GetUserIdIsAdmin();

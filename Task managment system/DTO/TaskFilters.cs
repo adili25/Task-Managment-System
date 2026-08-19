@@ -9,8 +9,8 @@ namespace Task_managment_system.DTO
         public string? TitleOrDescription { get; set; } = null;
         public Status? Status { get; set; } = null;
         public Priority? Priority { get; set; } = null;
-        public string? AssignedId { get; set; } = null;
-        public string? CreatorId { get; set; } = null;
+        public Guid? AssignedId { get; set; } = null;
+        public Guid? CreatorId { get; set; } = null;
         public DateTimeOffset? FromDueDate { get; set; } = null;
         public DateTimeOffset? ToDueDate { get; set; } = null;
 
@@ -20,8 +20,8 @@ namespace Task_managment_system.DTO
             string titleOrDescription,
             Status? status = null,
             Priority? priority = null,
-            string? assignedId = null,
-            string? creatorId = null,
+            Guid? assignedId = null,
+            Guid? creatorId = null,
             DateTimeOffset? fromDueDate = null,
             DateTimeOffset? toDueDate = null)
         {
