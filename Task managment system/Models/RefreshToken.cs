@@ -16,22 +16,27 @@ namespace Task_managment_system.Models
         public bool IsExpired => DateTimeOffset.UtcNow >= ExpiresAt;
         public bool IsActive => RevokedAt == null && !IsExpired;
 
-        public RefreshToken(Guid userId)
+        private RefreshToken(Guid userId, string tokenHash)
         {
             Id = Guid.NewGuid();
-            TokenHash = GenerateRefreshToken();
             UserId = userId;
+            TokenHash = tokenHash;
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(7);
             CreatedAt = DateTimeOffset.UtcNow;
         }
-
         private RefreshToken() { }
 
-        private string GenerateRefreshToken()
+        public static RefreshToken Create(Guid userId, out string rawToken)
         {
             var randomBytes = RandomNumberGenerator.GetBytes(64);
-            var token = Convert.ToBase64String(randomBytes);
-            byte[] tokenBytes = Encoding.UTF8.GetBytes(token);
+            rawToken = Convert.ToBase64String(randomBytes);
+
+            return new RefreshToken(userId, Hash(rawToken));
+        }
+
+        public static string Hash(string rawToken)
+        {
+            byte[] tokenBytes = Encoding.UTF8.GetBytes(rawToken);
             byte[] hashBytes = SHA256.HashData(tokenBytes);
 
             return Convert.ToHexString(hashBytes);

@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Task_Manager.Models;
 using Task_managment_system.DTO;
+using Task_managment_system.Exceptions;
 using Task_managment_system.Services;
+
+
 
 namespace Task_managment_system.Controllers
 {
@@ -54,12 +57,40 @@ namespace Task_managment_system.Controllers
             var user = await _userServices.UserVarification(loginRequest.Email, loginRequest.Password, cancellationToken); 
 
             var JwtToken = _authServices.GenerateJwtToken(user.Id.ToString(), user.Email, user.Role);
-            
+
+            var rawRefreshToken = await _authServices.IssueRefreshToken(user.Id, cancellationToken);
+
             return Ok(new
             {
                 message = "---Authentication Succussful---",
-                token = JwtToken
+                token = JwtToken,
+                refresh_token = rawRefreshToken
             });
         }
+
+        [HttpPost("refresh")]
+        public async Task<ActionResult> RefreshAccessToken([FromBody] RefreshDto refreshRequest, CancellationToken cancellationToken)
+        {
+            var (userId, newRawToken) = await _authServices.RotateRefreshToken(refreshRequest.RefreshToken, cancellationToken);
+
+            var user = await _userServices.GetUserById(userId, cancellationToken)
+                ?? throw new NotFoundException("the user was not found");
+
+            var jwtToken = _authServices.GenerateJwtToken(user.Id.ToString(), user.Email, user.Role);
+
+            return Ok(new
+            {
+                token = jwtToken,
+                refresh_token = newRawToken
+            });
+        }
+
+        [HttpPost("logout")]
+        public async Task<ActionResult> Logout([FromBody] RefreshDto refreshRequest, CancellationToken cancellationToken)
+        {
+            await _authServices.RevokeRefreshToken(refreshRequest.RefreshToken, cancellationToken);
+            return Ok(new { message = "---logged out---" });
+        }
+
     }
 }

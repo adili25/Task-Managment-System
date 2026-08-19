@@ -24,7 +24,7 @@ namespace Task_managment_system.Controllers
             var strCurrentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var isAdmin = User.IsInRole("Admin");
 
-            if (strCurrentUserId == null || Guid.TryParse(strCurrentUserId, out Guid currentUserId))
+            if (strCurrentUserId == null || !Guid.TryParse(strCurrentUserId, out Guid currentUserId))
             {
                 throw new UnauthorizedException("the user is not authorized");
             }

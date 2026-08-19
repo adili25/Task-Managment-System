@@ -8,6 +8,7 @@ using Task_managment_system.Interfaces;
 using Task_managment_system.Middlewares;
 using Task_managment_system.Repositries;
 using Task_managment_system.Services;
+using Task_managment_system.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -101,6 +102,7 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connect
 //---> here DbContext will crash if AddSingleton
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 // Scoped services
 builder.Services.AddScoped<AuthServices>();
