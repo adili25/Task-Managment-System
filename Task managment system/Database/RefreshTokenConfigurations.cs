@@ -20,6 +20,7 @@ namespace Task_managment_system.Database
             builder.Property(t => t.ReplacedByTokenHash);
             builder.Ignore(t => t.IsExpired);
             builder.Ignore(t => t.IsActive);
+            builder.Property<uint>("xmin").IsRowVersion().HasColumnName("xmin");
 
             builder.HasOne<ApplicationUser>()
                    .WithMany()

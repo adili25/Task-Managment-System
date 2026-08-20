@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -48,7 +49,6 @@ namespace Task_managment_system.Services
         {
             var token = RefreshToken.Create(userId, out var rawToken);
             await _refreshTokenRepo.Add(token, ct);
-            await _refreshTokenRepo.SaveChanges(ct);
             return rawToken;
         }
 
@@ -65,8 +65,14 @@ namespace Task_managment_system.Services
             stored.RevokedAt = DateTimeOffset.UtcNow;
             stored.ReplacedByTokenHash = newToken.TokenHash;
 
-            await _refreshTokenRepo.Add(newToken, cancellationToken);
-            await _refreshTokenRepo.SaveChanges(cancellationToken);
+            try
+            {
+                await _refreshTokenRepo.Add(newToken, cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new UnauthorizedException("the refresh token is revoked or expired");
+            }
 
             return (stored.UserId, newRawToken);
         }
